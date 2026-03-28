@@ -1,6 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional
 import openai
+import re
 
 from config import MINIMAX_API_KEY, MINIMAX_MODEL
 
@@ -11,7 +12,7 @@ if not MINIMAX_API_KEY:
 
 client = openai.AsyncOpenAI(
     api_key=MINIMAX_API_KEY,
-    base_url="https://api.minimax.chat/v1",
+    base_url="https://api.minimax.io/v1",
 ) if MINIMAX_API_KEY else None
 
 
@@ -20,12 +21,18 @@ async def get_minimax_completion(messages: List[Dict[str, str]], **kwargs) -> st
         raise RuntimeError("MiniMax client not initialized. Check MINIMAX_API_KEY.")
 
     try:
+        # Add a default timeout of 30 seconds, can be overridden by kwargs
+        timeout = kwargs.pop("timeout", 30.0)
         completion = await client.chat.completions.create(
             model=MINIMAX_MODEL,
             messages=messages,
+            timeout=timeout,  # Added timeout parameter
             **kwargs
         )
-        return completion.choices[0].message.content
+        content = completion.choices[0].message.content
+        # Remove <think>...</think> tags and their content
+        cleaned_content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+        return cleaned_content
     except Exception as e:
         logger.error(f"MiniMax API call failed: {e}")
         raise
