@@ -33,3 +33,5 @@ Thumbs.db
 # Claude/Cursor
 .claude/
 .cursor/
+
+minimax_image_test/
