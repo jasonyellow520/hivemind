@@ -5,7 +5,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from services.websocket_manager import manager as ws_manager
 from models.events import WSEvent, EventType
-from routers import tasks, hitl, agents, tabs, chat, screencast, memory, voice
+from routers import tasks, hitl, agents, tabs, chat, screencast, memory, voice, imessage
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -36,6 +36,10 @@ async def lifespan(app: FastAPI):
         pass
 
     await ws_manager.start_heartbeat(interval=10)
+
+    # Initialize conversation store
+    from services.conversation_store import conversation_store
+    await conversation_store.start()
 
     from services.tab_manager import tab_manager
 
@@ -92,6 +96,10 @@ async def lifespan(app: FastAPI):
     await browser_manager.stop_all()
     await tab_manager.close()
 
+    # Stop conversation store
+    from services.conversation_store import conversation_store
+    await conversation_store.stop()
+
 
 app = FastAPI(
     title="Mindd - Multi-Agent Swarm Dashboard",
@@ -115,6 +123,7 @@ app.include_router(chat.router)
 app.include_router(screencast.router)
 app.include_router(memory.router)
 app.include_router(voice.router)
+app.include_router(imessage.router)
 
 
 @app.websocket("/ws")

@@ -164,7 +164,7 @@ async def test_provision_tabs_prefers_domain_match(monkeypatch):
             return [(st, "", None, None) for st in subtasks]
 
         cdp_http = "http://localhost:9222"
-        all_tabs = dummy_tm.get_all_tabs()
+        all_tabs = await dummy_tm.get_all_tabs()
         free_tabs = [t for t in all_tabs if not t.assigned_agent_id]
 
         needed = max(0, len(subtasks) - len(free_tabs))

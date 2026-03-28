@@ -39,8 +39,10 @@ class TabManager:
         self._capture_lock = asyncio.Lock()
         # threading.Lock for screenshot cache — safe from both thread pool and async contexts
         self._screenshot_lock = threading.Lock()
-        # asyncio.Lock for agent assignment — protects concurrent assign/unassign calls
-        self._assignment_lock = asyncio.Lock()
+        # asyncio.Lock for all tab dict mutations/reads
+        self._tabs_lock = asyncio.Lock()
+        # Tabs the user explicitly closed — survives re-scans so CDP ghosts don't reappear
+        self._closed_ids: set[str] = set()
 
     def _make_tab_id(self, target: dict) -> str:
         return f"cdp-{target['id']}"
@@ -65,7 +67,8 @@ class TabManager:
         self._using_cdp = await self._check_cdp()
 
         if not self._using_cdp:
-            return list(self._tabs.values())
+            async with self._tabs_lock:
+                return list(self._tabs.values())
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -74,48 +77,64 @@ class TabManager:
                     timeout=aiohttp.ClientTimeout(total=5),
                 ) as resp:
                     if resp.status != 200:
-                        return list(self._tabs.values())
+                        async with self._tabs_lock:
+                            return list(self._tabs.values())
                     targets = await resp.json()
 
+            _SCAN_FILTER_HOSTS = (
+                "localhost:5173", "localhost:5174", "localhost:3000",
+                "localhost:8080", "localhost:8081",
+                "127.0.0.1:5173", "127.0.0.1:5174", "127.0.0.1:3000",
+                "127.0.0.1:8080", "127.0.0.1:8081",
+            )
             page_targets = [
                 t for t in targets
                 if t.get("type") == "page"
                 and not t.get("url", "").startswith("chrome://")
                 and not t.get("url", "").startswith("devtools://")
-                and not any(host in t.get("url", "") for host in ("localhost:5173", "localhost:5174", "localhost:3000"))
+                and not any(host in t.get("url", "") for host in _SCAN_FILTER_HOSTS)
             ]
-            current_ids: set[str] = set()
 
-            for target in page_targets:
-                tab_id = self._make_tab_id(target)
-                current_ids.add(tab_id)
-                existing = self._tabs.get(tab_id)
+            async with self._tabs_lock:
+                current_ids: set[str] = set()
 
-                tab = BrowserTabInfo(
-                    tab_id=tab_id,
-                    title=target.get("title", "Tab"),
-                    url=target.get("url", "about:blank"),
-                    favicon=target.get("faviconUrl", ""),
-                    # Preserve user-set instruction and agent assignment across re-scans
-                    instruction=existing.instruction if existing else "",
-                    assigned_agent_id=existing.assigned_agent_id if existing else None,
-                    is_cdp=True,
-                )
-                self._tabs[tab_id] = tab
-                self._cdp_targets[tab_id] = target
+                for target in page_targets:
+                    tab_id = self._make_tab_id(target)
+                    # Skip tabs the user explicitly closed (CDP ghosts)
+                    if tab_id in self._closed_ids:
+                        continue
+                    current_ids.add(tab_id)
+                    existing = self._tabs.get(tab_id)
 
-            # Remove tabs that no longer exist in Chrome
-            for old_id in list(self._tabs.keys()):
-                if old_id not in current_ids:
-                    self._tabs.pop(old_id, None)
-                    self._cdp_targets.pop(old_id, None)
+                    tab = BrowserTabInfo(
+                        tab_id=tab_id,
+                        title=target.get("title", "Tab"),
+                        url=target.get("url", "about:blank"),
+                        favicon=target.get("faviconUrl", ""),
+                        # Preserve user-set instruction and agent assignment across re-scans
+                        instruction=existing.instruction if existing else "",
+                        assigned_agent_id=existing.assigned_agent_id if existing else None,
+                        is_cdp=True,
+                    )
+                    self._tabs[tab_id] = tab
+                    self._cdp_targets[tab_id] = target
 
-            logger.debug(f"Synced {len(page_targets)} Chrome tabs")
-            return list(self._tabs.values())
+                # Remove tabs that no longer exist in Chrome
+                all_cdp_ids = {self._make_tab_id(t) for t in page_targets}
+                for old_id in list(self._tabs.keys()):
+                    if old_id not in current_ids:
+                        self._tabs.pop(old_id, None)
+                        self._cdp_targets.pop(old_id, None)
+                # Clear closed IDs for tabs that genuinely disappeared from CDP
+                self._closed_ids -= self._closed_ids - all_cdp_ids
+
+                logger.debug(f"Synced {len(page_targets)} Chrome tabs")
+                return list(self._tabs.values())
 
         except Exception as e:
             logger.error(f"CDP scan error: {e}")
-            return list(self._tabs.values())
+            async with self._tabs_lock:
+                return list(self._tabs.values())
 
     async def _activate_tab(self, target_id: str):
         """Bring a specific Chrome tab to the foreground via CDP."""
@@ -178,8 +197,9 @@ class TabManager:
                             url=target.get("url", url),
                             is_cdp=True,
                         )
-                        self._tabs[tab_id] = tab
-                        self._cdp_targets[tab_id] = target
+                        async with self._tabs_lock:
+                            self._tabs[tab_id] = tab
+                            self._cdp_targets[tab_id] = target
                         logger.info(f"Opened tab {tab_id}: {url}")
                         await self._refocus_dashboard()
                         return tab
@@ -195,8 +215,9 @@ class TabManager:
                                     url=target.get("url", url),
                                     is_cdp=True,
                                 )
-                                self._tabs[tab_id] = tab
-                                self._cdp_targets[tab_id] = target
+                                async with self._tabs_lock:
+                                    self._tabs[tab_id] = tab
+                                    self._cdp_targets[tab_id] = target
                                 logger.info(f"Opened tab {tab_id}: {url}")
                                 await self._refocus_dashboard()
                                 return tab
@@ -204,17 +225,20 @@ class TabManager:
             logger.error(f"Failed to open tab: {e}")
 
         # Fallback placeholder if CDP call fails
-        tab_id = f"local-{len(self._tabs)}"
-        tab = BrowserTabInfo(tab_id=tab_id, title="New Tab", url=url, is_cdp=False)
-        self._tabs[tab_id] = tab
+        async with self._tabs_lock:
+            tab_id = f"local-{len(self._tabs)}"
+            tab = BrowserTabInfo(tab_id=tab_id, title="New Tab", url=url, is_cdp=False)
+            self._tabs[tab_id] = tab
         return tab
 
     async def close_tab(self, tab_id: str) -> bool:
-        """Close a Chrome tab via CDP using its stable targetId."""
-        if tab_id not in self._tabs:
-            return False
+        """Close a Chrome tab via CDP using its stable targetId.
+        Adds to _closed_ids so a re-scan won't resurrect it."""
+        async with self._tabs_lock:
+            if tab_id not in self._tabs:
+                return False
+            target = self._cdp_targets.get(tab_id)
 
-        target = self._cdp_targets.get(tab_id)
         if target:
             target_id = target.get("id", "")
             if target_id:
@@ -229,12 +253,25 @@ class TabManager:
                 except Exception as e:
                     logger.error(f"Close tab CDP call failed: {e}")
 
-        self._tabs.pop(tab_id, None)
-        self._cdp_targets.pop(tab_id, None)
+        async with self._tabs_lock:
+            self._tabs.pop(tab_id, None)
+            self._cdp_targets.pop(tab_id, None)
+            self._closed_ids.add(tab_id)
         return True
+
+    _PROTECTED_HOSTS = [
+        "localhost:5173", "localhost:5174", "localhost:3000",
+        "localhost:8080", "localhost:8081",
+        "127.0.0.1:5173", "127.0.0.1:5174", "127.0.0.1:3000",
+        "127.0.0.1:8080", "127.0.0.1:8081",
+    ]
 
     async def navigate_tab(self, tab_id: str, url: str) -> bool:
         """Navigate a specific Chrome tab to a URL via CDP WebSocket."""
+        if any(host in url for host in self._PROTECTED_HOSTS):
+            logger.warning("Blocked navigation to protected URL: %s", url)
+            return None
+
         target = self._cdp_targets.get(tab_id)
         if target:
             ws_url = target.get("webSocketDebuggerUrl")
@@ -260,10 +297,12 @@ class TabManager:
                 except Exception as e:
                     logger.error(f"Navigate {tab_id} via CDP WS failed: {e}")
 
-        if tab_id in self._tabs:
-            self._tabs[tab_id] = self._tabs[tab_id].model_copy(update={"url": url})
+        async with self._tabs_lock:
+            if tab_id in self._tabs:
+                self._tabs[tab_id] = self._tabs[tab_id].model_copy(update={"url": url})
+            result = tab_id in self._tabs
         await self._refocus_dashboard()
-        return tab_id in self._tabs
+        return result
 
     async def get_tab_screenshot(self, tab_id: str) -> Optional[bytes]:
         """Return cached screenshot. Never blocks — cache is filled by background task."""
@@ -451,30 +490,34 @@ class TabManager:
         target = self._cdp_targets.get(tab_id)
         return target.get("id") if target else None
 
-    def set_instruction(self, tab_id: str, instruction: str):
-        if tab_id in self._tabs:
-            self._tabs[tab_id] = self._tabs[tab_id].model_copy(update={"instruction": instruction})
+    async def set_instruction(self, tab_id: str, instruction: str):
+        async with self._tabs_lock:
+            if tab_id in self._tabs:
+                self._tabs[tab_id] = self._tabs[tab_id].model_copy(update={"instruction": instruction})
 
     async def assign_agent(self, tab_id: str, agent_id: str):
         """Assign an agent to a tab. Thread-safe via asyncio lock."""
-        async with self._assignment_lock:
+        async with self._tabs_lock:
             if tab_id in self._tabs:
                 self._tabs[tab_id] = self._tabs[tab_id].model_copy(update={"assigned_agent_id": agent_id})
 
     async def unassign_agent(self, tab_id: str):
         """Remove agent assignment from a tab. Thread-safe via asyncio lock."""
-        async with self._assignment_lock:
+        async with self._tabs_lock:
             if tab_id in self._tabs:
                 self._tabs[tab_id] = self._tabs[tab_id].model_copy(update={"assigned_agent_id": None})
 
-    def get_tabs_with_instructions(self) -> list[BrowserTabInfo]:
-        return [t for t in self._tabs.values() if t.instruction.strip()]
+    async def get_tabs_with_instructions(self) -> list[BrowserTabInfo]:
+        async with self._tabs_lock:
+            return [t for t in self._tabs.values() if t.instruction.strip()]
 
-    def get_all_tabs(self) -> list[BrowserTabInfo]:
-        return list(self._tabs.values())
+    async def get_all_tabs(self) -> list[BrowserTabInfo]:
+        async with self._tabs_lock:
+            return list(self._tabs.values())
 
-    def get_tab(self, tab_id: str) -> Optional[BrowserTabInfo]:
-        return self._tabs.get(tab_id)
+    async def get_tab(self, tab_id: str) -> Optional[BrowserTabInfo]:
+        async with self._tabs_lock:
+            return self._tabs.get(tab_id)
 
     def is_cdp_connected(self) -> bool:
         return self._using_cdp

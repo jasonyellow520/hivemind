@@ -79,6 +79,9 @@ export type EventType =
   | 'VOICE_ANNOUNCEMENT'
   | 'QUEEN_COMMENTARY'
   | 'TABS_UPDATE'
+  | 'IMESSAGE_RECEIVED'
+  | 'IMESSAGE_SENT'
+  | 'IMESSAGE_STATUS_UPDATE'
   | 'PING'
 
 export interface WSEvent {

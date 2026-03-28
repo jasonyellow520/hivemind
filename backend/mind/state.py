@@ -26,3 +26,33 @@ class MindState(TypedDict):
     final_result: str
     phase: str
     errors: list[str]
+
+
+class HiveMindState(TypedDict):
+    """State for the iMessage → Dispatcher → Queen LangGraph flow."""
+    # Message context
+    message_id: str
+    from_phone: str
+    to_phone: str
+    message_text: str
+    conversation_history: list[dict]
+
+    # Intent classification
+    intent: str  # "chat" | "browser_task" | "status_query" | "unclear"
+    intent_confidence: float
+
+    # Task execution (populated only for browser_task)
+    task_id: str
+    master_task: str
+    subtasks: list[dict]
+    worker_results: dict[str, str]
+    final_result: str
+
+    # Response
+    reply_text: str
+    reply_sent: bool
+
+    # Control flow
+    phase: str
+    errors: list[str]
+    retry_count: int

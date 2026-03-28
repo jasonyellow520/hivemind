@@ -34,7 +34,7 @@ async def kill_agent(agent_id: str):
     await ws_manager.broadcast(agent_failed(agent_id, "Killed by user"))
     # Unassign from any tab
     from services.tab_manager import tab_manager
-    for tab in tab_manager.get_all_tabs():
+    for tab in await tab_manager.get_all_tabs():
         if tab.assigned_agent_id == agent_id:
             await tab_manager.unassign_agent(tab.tab_id)
     return {"ok": ok}

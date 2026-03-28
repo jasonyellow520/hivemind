@@ -18,6 +18,9 @@ class EventType(str, Enum):
     TASK_COMPLETE = "TASK_COMPLETE"
     VOICE_ANNOUNCEMENT = "VOICE_ANNOUNCEMENT"
     QUEEN_COMMENTARY = "QUEEN_COMMENTARY"
+    IMESSAGE_RECEIVED = "IMESSAGE_RECEIVED"
+    IMESSAGE_SENT = "IMESSAGE_SENT"
+    IMESSAGE_STATUS_UPDATE = "IMESSAGE_STATUS_UPDATE"
     PING = "PING"
 
 
@@ -139,3 +142,24 @@ def queen_commentary(agent_id: str, message: str, task_id: str = "") -> WSEvent:
 
 def ping(server_time: str) -> WSEvent:
     return WSEvent(type=EventType.PING, data={"server_time": server_time})
+
+def imessage_received(message_id: str, from_phone: str, text: str) -> WSEvent:
+    return WSEvent(type=EventType.IMESSAGE_RECEIVED, data={
+        "message_id": message_id,
+        "from_phone": from_phone,
+        "text": text,
+    })
+
+def imessage_sent(message_id: str, to_phone: str, text: str) -> WSEvent:
+    return WSEvent(type=EventType.IMESSAGE_SENT, data={
+        "message_id": message_id,
+        "to_phone": to_phone,
+        "text": text,
+    })
+
+def imessage_status_update(phone_number: str, status: str, task_id: str = "") -> WSEvent:
+    return WSEvent(type=EventType.IMESSAGE_STATUS_UPDATE, data={
+        "phone_number": phone_number,
+        "status": status,
+        "task_id": task_id,
+    })

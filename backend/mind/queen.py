@@ -9,9 +9,12 @@ from mind.memory import create_memory, get_memory, get_active_memory, SharedMind
 from mind.worker import run_worker
 from services.mistral_client import queen_decompose, queen_chat
 from services.browser_manager import browser_manager
+from services.tab_manager import CDP_DEFAULT_URL
 from services.websocket_manager import manager as ws_manager
 from services import elevenlabs_service
 from services import supermemory_service
+from services import imessage_sender
+from services import conversation_store
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +99,8 @@ async def _provision_tabs_for_subtasks(
     if not tm.is_cdp_connected():
         return [(st, "", None, None) for st in subtasks]
 
-    cdp_http = "http://127.0.0.1:9222"
-    all_tabs = tm.get_all_tabs()
+    cdp_http = CDP_DEFAULT_URL
+    all_tabs = await tm.get_all_tabs()
     free_tabs = [t for t in all_tabs if not t.assigned_agent_id]
 
     needed = max(0, len(subtasks) - len(free_tabs))
@@ -160,7 +163,7 @@ async def _provision_tabs_for_subtasks(
     try:
         from services.websocket_manager import manager as _ws
         from models.events import WSEvent, EventType
-        tabs_data = [t.model_dump() for t in tm.get_all_tabs()]
+        tabs_data = [t.model_dump() for t in await tm.get_all_tabs()]
         await _ws.broadcast(WSEvent(
             type=EventType.TABS_UPDATE,
             data={"tabs": tabs_data, "cdp_connected": True},
@@ -182,7 +185,7 @@ async def execute_task(request: TaskRequest, task_id: str | None = None) -> Task
     try:
         from services.tab_manager import tab_manager as _tm
         if _tm.is_cdp_connected():
-            open_tabs = [t.url for t in _tm.get_all_tabs() if t.url and t.url.strip() not in ("", "about:blank")]
+            open_tabs = [t.url for t in await _tm.get_all_tabs() if t.url and t.url.strip() not in ("", "about:blank")]
     except Exception:
         pass
 
@@ -264,6 +267,18 @@ async def execute_task(request: TaskRequest, task_id: str | None = None) -> Task
     await ws_manager.broadcast(events.task_accepted(task_id, agent_count))
     logger.info("Deploying %d agent(s) for task %s", agent_count, task_id)
 
+    # Check if this task is associated with an iMessage conversation
+    phone_number = await conversation_store.get_phone_number_for_task(task_id)
+    if phone_number:
+        try:
+            await imessage_sender.send_status_update(
+                to_phone=phone_number,
+                status_text=f"🚀 Starting task with {agent_count} agent(s)...",
+                task_id=task_id
+            )
+        except Exception as e:
+            logger.warning(f"Failed to send iMessage status update: {e}")
+
     try:
         word = "agent" if agent_count == 1 else "agents"
         audio = await elevenlabs_service.announce(f"Mind activated. Deploying {agent_count} {word}.")
@@ -273,43 +288,53 @@ async def execute_task(request: TaskRequest, task_id: str | None = None) -> Task
     except Exception:
         pass
 
-    independent = [st for st in subtasks if not st.depends_on]
-    dependent = [st for st in subtasks if st.depends_on]
+    # --- DAG-aware execution: launch tasks as their dependencies complete ---
+    all_hints = {subtasks[i].subtask_id: tab_hints[i] for i in range(len(subtasks))}
+    completed_ids: set[str] = set()
+    all_results: list = []
+    running: dict[str, asyncio.Task] = {}  # subtask_id -> asyncio.Task
+    pending_ids = {st.subtask_id for st in subtasks}
 
-    # Build hint lists matching independent / dependent ordering
-    ind_hints = [tab_hints[subtasks.index(st)] for st in independent]
-    tab_mappings = await _provision_tabs_for_subtasks(independent, tab_hints=ind_hints)
-
-    async_tasks = []
-    for i, (st, tab_id, cdp_url, cdp_target_id) in enumerate(tab_mappings):
-        gidx = _next_global_index()
-        t = asyncio.create_task(
-            run_worker(
-                st, i, tab_id=tab_id, cdp_url=cdp_url or "",
-                cdp_target_id=cdp_target_id, task_id=task_id, global_index=gidx,
-            )
-        )
-        browser_manager.register_task(f"worker-{st.subtask_id}", t)
-        async_tasks.append(t)
-
-    results = await asyncio.gather(*async_tasks, return_exceptions=True)
-
-    if dependent:
-        dep_hints = [tab_hints[subtasks.index(st)] for st in dependent]
-        dep_mappings = await _provision_tabs_for_subtasks(dependent, tab_hints=dep_hints)
-        dep_async_tasks = []
-        for i, (st, tab_id, cdp_url, cdp_target_id) in enumerate(dep_mappings):
+    async def _launch_ready():
+        """Find subtasks whose deps are satisfied and launch them."""
+        ready = [
+            st for st in subtasks
+            if st.subtask_id in pending_ids
+            and st.subtask_id not in running
+            and all(d in completed_ids for d in st.depends_on)
+        ]
+        if not ready:
+            return
+        hints_for_ready = [all_hints.get(st.subtask_id) for st in ready]
+        mappings = await _provision_tabs_for_subtasks(ready, tab_hints=hints_for_ready)
+        for st, tab_id, cdp_url, cdp_target_id in mappings:
             gidx = _next_global_index()
             t = asyncio.create_task(
                 run_worker(
-                    st, len(independent) + i, tab_id=tab_id, cdp_url=cdp_url or "",
+                    st, subtasks.index(st), tab_id=tab_id, cdp_url=cdp_url or "",
                     cdp_target_id=cdp_target_id, task_id=task_id, global_index=gidx,
                 )
             )
             browser_manager.register_task(f"worker-{st.subtask_id}", t)
-            dep_async_tasks.append(t)
-        dep_results = await asyncio.gather(*dep_async_tasks, return_exceptions=True)
-        results = list(results) + list(dep_results)
+            running[st.subtask_id] = t
+            pending_ids.discard(st.subtask_id)
+
+    await _launch_ready()
+
+    while running:
+        done, _ = await asyncio.wait(running.values(), return_when=asyncio.FIRST_COMPLETED)
+        for task_obj in done:
+            sid = next(k for k, v in running.items() if v is task_obj)
+            del running[sid]
+            completed_ids.add(sid)
+            try:
+                all_results.append(task_obj.result())
+            except Exception as exc:
+                all_results.append(exc)
+        # Launch any newly unblocked tasks
+        await _launch_ready()
+
+    results = all_results
 
     successful = []
     failed = []
@@ -357,6 +382,18 @@ async def execute_task(request: TaskRequest, task_id: str | None = None) -> Task
         )
     except Exception as e:
         logger.warning("Supermemory save failed (non-blocking): %s", e)
+
+    # Send final iMessage update if applicable
+    if phone_number:
+        try:
+            summary = f"✅ Task complete: {final_result[:500]}"
+            await imessage_sender.send_status_update(
+                to_phone=phone_number,
+                status_text=summary,
+                task_id=task_id
+            )
+        except Exception as e:
+            logger.warning(f"Failed to send final iMessage update: {e}")
 
     try:
         audio = await elevenlabs_service.announce("Task complete. Results are ready.")
@@ -429,7 +466,7 @@ async def execute_tab_tasks(tabs_with_instructions: list, global_task: str = "")
             description=task_desc,
             url=url if url != "about:blank" else None,
         )
-        cdp_url = "http://127.0.0.1:9222" if tm.is_cdp_connected() else None
+        cdp_url = CDP_DEFAULT_URL if tm.is_cdp_connected() else None
         cdp_target_id = tm.get_cdp_target_id(tab_id) if tab_id else None
         logger.info("Tab task: tab_id=%s cdp_url=%s cdp_target_id=%s task=%s",
                      tab_id, cdp_url, cdp_target_id, task_desc[:80])

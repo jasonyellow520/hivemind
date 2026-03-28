@@ -31,7 +31,7 @@ class NavigateRequest(BaseModel):
 
 async def _broadcast_tabs():
     """Broadcast current tab state to all connected clients."""
-    tab_dicts = [t.model_dump() for t in tab_manager.get_all_tabs()]
+    tab_dicts = [t.model_dump() for t in await tab_manager.get_all_tabs()]
     await ws_manager.broadcast(WSEvent(
         type=EventType.TABS_UPDATE,
         data={
@@ -68,7 +68,7 @@ async def scan_tabs():
 @router.get("/")
 async def list_tabs():
     """Get current in-memory tab list (no re-scan)."""
-    tabs = tab_manager.get_all_tabs()
+    tabs = await tab_manager.get_all_tabs()
     return {
         "tabs": [t.model_dump() for t in tabs],
         "cdp_connected": tab_manager.is_cdp_connected(),
@@ -85,7 +85,21 @@ async def open_tab(req: OpenTabRequest):
 
 @router.delete("/{tab_id}")
 async def close_tab(tab_id: str):
-    """Close a specific tab."""
+    """Close a specific tab and kill any assigned agent."""
+    # Kill the agent assigned to this tab (if any)
+    try:
+        tab = await tab_manager.get_tab(tab_id)
+        if tab and tab.assigned_agent_id:
+            from services.browser_manager import browser_manager
+            await browser_manager.kill_agent(tab.assigned_agent_id)
+            from models import events as evt
+            await ws_manager.broadcast(evt.agent_failed(
+                agent_id=tab.assigned_agent_id,
+                error="Tab closed",
+            ))
+    except Exception as e:
+        logger.warning("Failed to kill agent for closed tab %s: %s", tab_id, e)
+
     success = await tab_manager.close_tab(tab_id)
     if not success:
         raise HTTPException(status_code=404, detail=f"Tab {tab_id} not found or already closed")
@@ -105,13 +119,16 @@ async def navigate_tab(tab_id: str, req: NavigateRequest):
 
 @router.get("/{tab_id}/screenshot")
 async def screenshot_tab(tab_id: str):
-    """Get a JPEG screenshot of a specific tab (base64 encoded). Re-scans CDP once on miss to fix stale tab list."""
+    """Get a JPEG screenshot of a specific tab (base64 encoded).
+    Returns empty screenshot_b64 if not yet cached (background tabs can't be captured)."""
     img_bytes = await tab_manager.get_tab_screenshot(tab_id)
     if not img_bytes:
+        # Try one rescan in case the tab list is stale
         await tab_manager.scan_tabs()
         img_bytes = await tab_manager.get_tab_screenshot(tab_id)
     if not img_bytes:
-        raise HTTPException(status_code=404, detail=f"Tab {tab_id} not found or screenshot failed")
+        # Return empty rather than 404 — background tabs can't be screenshotted
+        return {"tab_id": tab_id, "screenshot_b64": "", "type": "image/jpeg"}
     b64 = base64.b64encode(img_bytes).decode()
     return {"tab_id": tab_id, "screenshot_b64": b64, "type": "image/jpeg"}
 
@@ -119,7 +136,7 @@ async def screenshot_tab(tab_id: str):
 @router.post("/instruct")
 async def set_tab_instruction(req: TabInstructionRequest):
     """Set instruction for a specific tab."""
-    tab_manager.set_instruction(req.tab_id, req.instruction)
+    await tab_manager.set_instruction(req.tab_id, req.instruction)
     await _broadcast_tabs()
     return {"status": "ok", "tab_id": req.tab_id}
 
@@ -128,9 +145,9 @@ async def set_tab_instruction(req: TabInstructionRequest):
 async def execute_tab_instructions(req: TabInstructionsSubmit, background_tasks: BackgroundTasks):
     """Execute instructions on tabs with instructions, in parallel."""
     for instr in req.instructions:
-        tab_manager.set_instruction(instr.tab_id, instr.instruction)
+        await tab_manager.set_instruction(instr.tab_id, instr.instruction)
 
-    tabs_with_instr = tab_manager.get_tabs_with_instructions()
+    tabs_with_instr = await tab_manager.get_tabs_with_instructions()
 
     async def _run():
         from mind.queen import execute_tab_tasks
@@ -197,7 +214,7 @@ async def activate_tab(tab_id: str):
 @router.post("/{tab_id}/save-to-memory")
 async def save_tab_to_memory(tab_id: str):
     """Scrape page text and save it into the Queen's shared memory + supermemory."""
-    tab = tab_manager.get_tab(tab_id)
+    tab = await tab_manager.get_tab(tab_id)
     if not tab:
         return {"ok": False, "error": "Tab not found"}
 
@@ -259,7 +276,7 @@ async def tab_status():
     return {
         "cdp_connected": tab_manager.is_cdp_connected(),
         "cdp_url": "http://127.0.0.1:9222",
-        "tab_count": len(tab_manager.get_all_tabs()),
+        "tab_count": len(await tab_manager.get_all_tabs()),
         "cdp_target_count": len(tab_manager._cdp_targets),
         "screenshot_cache_count": len(tab_manager._screenshot_cache),
         "targets": targets_info,
@@ -313,7 +330,7 @@ async def diagnostic():
     checks["screenshot_cache"] = {
         "ok": len(tab_manager._screenshot_cache) > 0,
         "cached": len(tab_manager._screenshot_cache),
-        "tabs": len(tab_manager.get_all_tabs()),
+        "tabs": len(await tab_manager.get_all_tabs()),
     }
 
     # 4. Gemini API key

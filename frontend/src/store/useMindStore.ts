@@ -291,7 +291,21 @@ export const useMindStore = create<MindStore>((set) => ({
   setLiveVoice: (active, state = 'idle', transcript = '') =>
     set({ isLiveVoice: active, liveVoiceState: state, liveTranscript: transcript }),
 
-  setTabs: (tabs) => set({ tabs }),
+  setTabs: (tabs) =>
+    set((s) => {
+      const tabIds = new Set(tabs.map((t) => t.tabId))
+      // Prune agents whose tab was closed and are no longer actively running
+      const activeStatuses = new Set(['running', 'planning', 'waiting_hitl'])
+      const prunedAgents: Record<string, AgentState> = {}
+      for (const [id, agent] of Object.entries(s.agents)) {
+        const hasTab = !agent.tabId || tabIds.has(agent.tabId)
+        const isActive = activeStatuses.has(agent.status)
+        if (hasTab || isActive) {
+          prunedAgents[id] = agent
+        }
+      }
+      return { tabs, agents: prunedAgents }
+    }),
 
   updateTabInstruction: (tabId, instruction) =>
     set((s) => ({

@@ -15,7 +15,7 @@ const EDGE_COLORS: Record<string, string> = {
 }
 
 // Flat-top hex axial → pixel center
-const HEX_SIZE = 110
+const HEX_SIZE = 100
 const HEX_W = 200
 const HEX_H = 174
 
@@ -72,6 +72,16 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
     const agentList = Object.values(agents)
     const agentCount = agentList.length
 
+    const PROTECTED_HOSTS = [
+      'localhost:5173', 'localhost:5174', 'localhost:3000',
+      'localhost:8080', 'localhost:8081',
+      '127.0.0.1:5173', '127.0.0.1:5174',
+      '127.0.0.1:3000', '127.0.0.1:8080', '127.0.0.1:8081',
+    ]
+    const safeTabs = tabs.filter(
+      (t) => !PROTECTED_HOSTS.some((h) => (t.url || '').includes(h))
+    )
+
     const nodes: Node[] = []
     const edges: Edge[] = []
 
@@ -93,7 +103,7 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
 
     // --- Domain-clustered tab ordering ---
     const byDomain = new Map<string, typeof tabs>()
-    for (const tab of tabs) {
+    for (const tab of safeTabs) {
       const domain = getDomain(tab.url)
       const group = byDomain.get(domain) ?? []
       group.push(tab)
@@ -104,7 +114,10 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
       .flat()
 
     const tabCount = orderedTabs.length
-    const RINGS = Math.ceil(Math.sqrt(tabCount / 6)) + 2
+    const domainCount = byDomain.size
+    const gapCells = Math.max(0, domainCount - 1)
+    const totalCells = tabCount + gapCells
+    const RINGS = Math.ceil(Math.sqrt(totalCells / 6)) + 2
     const spiralCells = hexSpiral(RINGS)
 
     // Track pixel positions per domain for centroid label computation
@@ -120,7 +133,7 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
       if (prevDomain && domain !== prevDomain) cellIndex++
       prevDomain = domain
 
-      if (cellIndex >= spiralCells.length) { cellIndex++; continue }
+      if (cellIndex >= spiralCells.length) break;
 
       const [q, r] = spiralCells[cellIndex]
       const { x, y } = axialToPixel(q, r)
@@ -159,7 +172,7 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
         const agent = hasAgent
           ? agentList.find((a) => a.agentId === tab.assignedAgentId)
           : null
-        const agentStatus = agent?.status || 'running'
+        const agentStatus = agent?.status || (hasAgent ? 'running' : 'idle')
         const edgeColor = EDGE_COLORS[agentStatus] || 'rgba(0,212,255,0.4)'
         const isAnimated = agentStatus === 'running' || agentStatus === 'planning'
 
@@ -197,57 +210,95 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
       })
     })
 
-    // --- Worker agent nodes (inner ring around queen) ---
-    const AGENT_RADIUS = agentCount <= 3 ? 180 : agentCount <= 6 ? 210 : 250
+    // --- Worker agent nodes (clustered by task_id) ---
     const AGENT_W = 60
     const AGENT_H = 70
 
-    agentList.forEach((agent: AgentState, i: number) => {
-      const angle = (2 * Math.PI * i) / Math.max(agentCount, 1) - Math.PI / 2
-      const x = queenPx.x + AGENT_RADIUS * Math.cos(angle) - AGENT_W
-      const y = queenPx.y + AGENT_RADIUS * Math.sin(angle) - AGENT_H
+    // Filter out stale agents: completed/failed agents whose tab no longer exists
+    const tabIdSet = new Set(safeTabs.map((t) => t.tabId))
+    const activeStatuses = new Set(['running', 'planning', 'waiting_hitl'])
+    const liveAgents = agentList.filter((agent) => {
+      if (activeStatuses.has(agent.status)) return true
+      if (!agent.tabId) return true // no tab assigned, still show (e.g. decomposing)
+      return tabIdSet.has(agent.tabId)
+    })
 
-      nodes.push({
-        id: agent.agentId,
-        type: 'workerNode',
-        position: { x, y },
-        data: {
-          ...agent,
-          label: `Agent ${agent.subtaskIndex + 1}`,
-        },
-        draggable: true,
-      })
+    // Group agents by taskId
+    const taskGroups = new Map<string, AgentState[]>()
+    for (const agent of liveAgents) {
+      const tid = agent.taskId || 'unassigned'
+      const group = taskGroups.get(tid) ?? []
+      group.push(agent)
+      taskGroups.set(tid, group)
+    }
 
-      const isAnimated = agent.status === 'running' || agent.status === 'planning'
-      const edgeColor = EDGE_COLORS[agent.status] || 'rgba(0,212,255,0.2)'
+    // Sort task groups by their tabs' domains for adjacency of similar tasks
+    const taskIds = [...taskGroups.keys()].sort((a, b) => {
+      const aTabs = taskGroups.get(a)?.map(ag => ag.tabId).filter(Boolean) ?? []
+      const bTabs = taskGroups.get(b)?.map(ag => ag.tabId).filter(Boolean) ?? []
+      const aDomain = aTabs.length > 0
+        ? getDomain(tabs.find(t => t.tabId === aTabs[0])?.url || '')
+        : ''
+      const bDomain = bTabs.length > 0
+        ? getDomain(tabs.find(t => t.tabId === bTabs[0])?.url || '')
+        : ''
+      return aDomain.localeCompare(bDomain)
+    })
 
-      edges.push({
-        id: `edge-${QUEEN_ID}-${agent.agentId}`,
-        source: QUEEN_ID,
-        target: agent.agentId,
-        animated: isAnimated,
-        style: {
-          stroke: edgeColor,
-          strokeWidth: isAnimated ? 2 : 1.5,
-          filter: isAnimated ? `drop-shadow(0 0 4px ${edgeColor})` : undefined,
-        },
-        type: 'smoothstep',
-      })
+    const sectorSize = (2 * Math.PI) / Math.max(taskIds.length, 1)
+    const AGENT_RADIUS = agentCount <= 3 ? 180 : agentCount <= 6 ? 210 : 250
 
-      if (agent.tabId && tabs.find((t) => t.tabId === agent.tabId)) {
+    taskIds.forEach((taskId, taskIndex) => {
+      const sectorStart = sectorSize * taskIndex - Math.PI / 2
+      const workers = taskGroups.get(taskId)!
+
+      workers.forEach((agent: AgentState, i: number) => {
+        const angle = sectorStart + (sectorSize / (workers.length + 1)) * (i + 1)
+        const x = queenPx.x + AGENT_RADIUS * Math.cos(angle) - AGENT_W
+        const y = queenPx.y + AGENT_RADIUS * Math.sin(angle) - AGENT_H
+
+        nodes.push({
+          id: agent.agentId,
+          type: 'workerNode',
+          position: { x, y },
+          data: {
+            ...agent,
+            label: `Agent ${agent.globalIndex || agent.subtaskIndex + 1}`,
+          },
+          draggable: true,
+        })
+
+        const isAnimated = agent.status === 'running' || agent.status === 'planning'
+        const edgeColor = EDGE_COLORS[agent.status] || 'rgba(0,212,255,0.2)'
+
         edges.push({
-          id: `edge-agent-tab-${agent.agentId}`,
-          source: agent.agentId,
-          target: `tab-${agent.tabId}`,
-          animated: agent.status === 'running',
+          id: `edge-${QUEEN_ID}-${agent.agentId}`,
+          source: QUEEN_ID,
+          target: agent.agentId,
+          animated: isAnimated,
           style: {
-            stroke: EDGE_COLORS[agent.status] || 'rgba(0,212,255,0.3)',
-            strokeWidth: 1.5,
-            strokeDasharray: '5 3',
+            stroke: edgeColor,
+            strokeWidth: isAnimated ? 2 : 1.5,
+            filter: isAnimated ? `drop-shadow(0 0 4px ${edgeColor})` : undefined,
           },
           type: 'smoothstep',
         })
-      }
+
+        if (agent.tabId && tabs.find((t) => t.tabId === agent.tabId)) {
+          edges.push({
+            id: `edge-agent-tab-${agent.agentId}`,
+            source: agent.agentId,
+            target: `tab-${agent.tabId}`,
+            animated: agent.status === 'running',
+            style: {
+              stroke: EDGE_COLORS[agent.status] || 'rgba(0,212,255,0.3)',
+              strokeWidth: 1.5,
+              strokeDasharray: '5 3',
+            },
+            type: 'smoothstep',
+          })
+        }
+      })
     })
 
     return { nodes, edges }

@@ -95,6 +95,12 @@ class BrowserManager:
         """Create an agent using the configured engine."""
         effective_cdp = cdp_url or CDP_DEFAULT_URL
 
+        # Reject agents targeting the dashboard or backend
+        if start_url:
+            for domain in PROTECTED_DOMAINS:
+                if domain in start_url:
+                    raise ValueError(f"Cannot create agent targeting protected domain: {domain}")
+
         if BROWSER_ENGINE == "playwright":
             handle = _PlaywrightHandle(
                 agent_id=agent_id,

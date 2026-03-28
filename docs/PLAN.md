@@ -1,286 +1,137 @@
-# HIVEMIND v2: iMessage-Controlled AI Browser Swarm
+# HIVEMIND v2: Remaining Work & Known Issues
 
-## Context
-
-Hackathon project (Productivity & Life Hacks track). The team already has a working multi-agent browser orchestration system ("HIVEMIND" at `mistralhackathon/`) where a Queen agent (Gemini 3.1 Pro) decomposes tasks and dispatches Worker agents (Gemini 3 Flash) that each control a real Chrome tab via CDP. The goal is to add **iMessage as a command interface** using Photon iMessage Kit, integrate **MiniMax-M2.7** for all conversational AI, redesign the orchestration with **LangGraph**, and fix existing bugs.
-
-**Pitch**: "Text your AI. No app install needed --- just iMessage. One message deploys a swarm of browser agents that shop, research, and compare for you."
+## Status: Core implementation complete (Phases 1-5). See [COMPLETION.md](COMPLETION.md) for what's done.
 
 ---
 
-## System Architecture
+## Remaining Work
 
-```
-  iPhone (iMessage)
-       |
-       v
-+----------------------------------------------+
-|  macOS Machine                                |
-|                                               |
-|  iMessage Bridge       FastAPI Backend        |
-|  (Node.js :3001)  <--> (:8080)               |
-|  Photon iMessage Kit   LangGraph Router       |
-|  - polls chat.db       - intent classifier    |
-|  - webhooks to FastAPI  - Queen/swarm path     |
-|  - sends via AppleScript- chat agent path     |
-|                                               |
-|  Chrome CDP (:9222)    React Frontend (:5173) |
-|  - Worker agents        - Hex hive canvas     |
-|  - tab control          - iMessage panel      |
-+----------------------------------------------+
-```
+### Person A -- Dashboard Redesign + Demo + Pitch
+All tasks remain open. Person A works independently in Stitch (Google design tool).
 
-### Message Flow
+| # | Task | Status |
+|---|------|--------|
+| A1 | Redesign dashboard layout in Stitch | Not started |
+| A2 | Redesign CommandBar, EventFeed, AgentLogPanel | Not started |
+| A3 | Redesign QueenNode, WorkerNode, TabNode visuals | Not started |
+| A4 | Landing/hero page for hackathon demo | Not started |
+| A5 | Pitch deck -- "Text your AI" narrative | Not started |
+| A6 | Demo script + talking points (3-min flow) | Not started |
+| A7 | Record backup demo video | Blocked by working demo |
+| A8 | Apply Stitch designs to React components | Blocked by A1-A3 |
 
-```
-iMessage received
-    --> Photon SDK polls chat.db (2s)
-    --> POST /api/v1/imessage/webhook (FastAPI)
-    --> LangGraph: classify_intent (MiniMax-M2.7)
-        |
-        |--> "information" --> quick_answer (MiniMax) --> reply via iMessage
-        |
-        |--> "browser_task" --> Queen decompose (Gemini Pro)
-                --> dispatch Workers (Gemini Flash)
-                --> status updates via iMessage ("Agent 1 on Amazon...")
-                --> synthesize results (MiniMax)
-                --> reply via iMessage (text + screenshots)
+### Person B -- iMessage Bridge (Photon SDK)
+The Node.js iMessage bridge sidecar has not been built yet. This is macOS-only work.
 
-While swarm runs: new messages --> parallel chat agent (MiniMax) --> instant replies
-```
+| # | Task | Status |
+|---|------|--------|
+| B1 | Set up `backend/imessage-bridge/` Node.js project | Not started |
+| B2 | Implement Photon polling + webhook POST | Not started (blocked by B1) |
+| B3 | Implement `/send` endpoint for outbound iMessages | Not started (blocked by B1) |
+| B7 | End-to-end test: iMessage -> swarm -> reply | Blocked by B2, B3 |
+
+### Person C -- Intent Classification Testing
+
+| # | Task | Status |
+|---|------|--------|
+| C2 | Test intent classification with 10+ sample messages | Not started (needs MiniMax API key) |
 
 ---
 
-## Model Allocation
+## Known Issues
 
-| Role | Model | Why |
-|---|---|---|
-| Intent Classifier | **MiniMax-M2.7** | Cheap ($0.30/M), fast, strong classification |
-| Quick Answer Agent | **MiniMax-M2.7** | Conversational, handles info queries |
-| Parallel Chat Agent | **MiniMax-M2.7** | Always-on while swarm busy, low cost |
-| Result Synthesizer | **MiniMax-M2.7** | Summarizes agent outputs for iMessage |
-| Status Updates | **MiniMax-M2.7** | Quick 1-sentence progress messages |
-| Queen Decomposer | **Gemini 3.1 Pro** | Complex planning, existing & proven |
-| Worker Agents | **Gemini 3 Flash** | Browser control needs speed + vision |
-| Queen Guidance | **Gemini 3.1 Pro** | Worker help queries, existing |
+### High Priority
 
-**MiniMax**: 5 integration points (all iMessage-facing). **Gemini**: 3 (all browser-facing). Best of both worlds.
+1. **Backend needs restart after code changes**
+   The running uvicorn instance does not have the new iMessage routes loaded. Restart with `cd backend && uvicorn main:app --reload --port 8080`.
 
----
+2. **MiniMax API key not tested**
+   The `minimax_client.py` is complete but `MINIMAX_API_KEY` may not be set in `.env`. Without it, all MiniMax functions will raise RuntimeError. The `llm_fallback.py` falls back to Gemini.
 
-## LangGraph Design
+3. **iMessage bridge not built**
+   The `imessage_sender.py` HTTP client is ready but the bridge sidecar (Node.js on macOS) at `http://localhost:3001` doesn't exist yet. All iMessage send operations will fail until Person B builds it.
 
-### Main Graph (`build_hivemind_graph()`)
+### Medium Priority
 
-**State: `HiveMindState`** extends existing `MindState`:
-```
-+ message_id, sender_id, message_text, conversation_id
-+ intent ("information" | "browser_task" | "status_query" | "followup")
-+ intent_confidence
-+ response_text, response_attachments
-+ status_updates_sent
-```
+4. **Conversation store is in-memory**
+   `conversation_store.py` persists to a JSON file every 5 minutes. A crash within the 5-minute window loses messages. For hackathon, this is acceptable. Production would need a database.
 
-**Nodes:**
-1. `receive_message` -- normalize input from webhook
-2. `classify_intent` -- MiniMax-M2.7 classifies intent
-3. `quick_answer` -- MiniMax answers info queries directly
-4. `queen_plan` -- existing Gemini decomposition (reuse `queen.execute_task()` internals)
-5. `dispatch_workers` -- existing worker dispatch via `asyncio.gather`
-6. `monitor_workers` -- poll worker status, send iMessage progress updates
-7. `aggregate` -- collect results
-8. `synthesize_results` -- MiniMax creates user-friendly summary
-9. `format_reply` -- format for iMessage (text + optional screenshot attachments)
-10. `send_imessage_reply` -- call bridge's /send endpoint
+5. **No rate limiting on iMessage webhook**
+   The `/api/v1/imessage/webhook` endpoint has no rate limiting. A flood of messages would spawn many LangGraph invocations concurrently.
 
-**Routing:**
-- After `classify_intent`: conditional edge based on `state["intent"]`
-- `"information"` -> `quick_answer` -> `format_reply` -> `send_imessage_reply`
-- `"browser_task"` -> `queen_plan` -> `dispatch_workers` -> `monitor_workers` -> `aggregate` -> `synthesize_results` -> `format_reply` -> `send_imessage_reply`
+6. **Screenshot cache unbounded**
+   `tab_manager.py` screenshot cache grows with open tabs but has no max-size eviction. With many tabs open for hours, memory could grow. Low risk for hackathon demo.
 
-### Parallel Chat Graph (`build_chat_graph()`)
-Separate graph for handling messages while swarm is running:
-1. `receive_chat` -- ingest message + check if swarm active
-2. `check_status` -- if user asks "how's it going?", inject live agent status
-3. `answer` -- MiniMax chat with conversation history
-4. `send_reply` -- reply via iMessage
+### Low Priority
 
-**Concurrency**: Webhook checks `conversation_store` for active swarm tasks. If swarm running AND new message is info/status query, dispatch to chat graph instead.
+7. **Intent classification accuracy unknown**
+   The MiniMax intent classifier prompt is designed but untested with real messages. May need prompt tuning after testing (C2 task).
+
+8. **Task-clustered layout untested with real multi-task swarms**
+   The angular sector layout logic is implemented but hasn't been tested with 2+ concurrent tasks spawning workers. Visual verification pending.
+
+9. **build_chat_graph() not implemented as separate graph**
+   Instead of a separate parallel chat graph, chat-while-swarm functionality is integrated directly into the `chat_respond` node of `build_hivemind_graph()`. This is simpler but means chat goes through the full Dispatcher graph. For hackathon this is fine.
 
 ---
 
-## New Files to Create
+## Architecture Decisions
 
-### 1. iMessage Bridge Sidecar
-**`backend/imessage-bridge/`** (TypeScript, Node.js)
+### What changed from original plan
 
-| File | Purpose |
-|---|---|
-| `package.json` | deps: `@photon-ai/imessage-kit`, `express`, `axios` |
-| `src/index.ts` | Init Photon SDK, webhook to FastAPI, expose `/send` + `/health` |
-| `src/config.ts` | `WEBHOOK_URL`, `BRIDGE_PORT=3001`, `POLL_INTERVAL=2000` |
-
-### 2. Backend - New Files
-
-| File | Purpose |
-|---|---|
-| `routers/imessage.py` | `POST /webhook`, `POST /send`, `GET /conversations`, `GET /status` |
-| `services/minimax_client.py` | OpenAI SDK + MiniMax base_url. Functions: `classify_intent()`, `quick_answer()`, `synthesize_results()`, `chat_with_context()`. Fallback to Gemini if MiniMax down. |
-| `services/imessage_sender.py` | `send_text()`, `send_file()`, `send_status_update()`. Calls bridge HTTP. Retry + queue. |
-| `services/conversation_store.py` | In-memory dict by sender_id. Message history (20), active task IDs, timestamps. Asyncio locks. |
-
-### 3. Frontend - No New iMessage UI
-
-There is **no iMessage panel in the dashboard**. iMessage is purely a backend integration -- users interact via their iPhone's native iMessage app. The dashboard only shows the swarm (hex canvas, agents, tabs, logs) as it already does.
+| Original Plan | Actual Implementation | Why |
+|---------------|----------------------|-----|
+| Separate `build_chat_graph()` | Chat integrated into `build_hivemind_graph()` | Simpler, same behavior — `chat_respond` node checks swarm status |
+| `_assignment_lock` separate from `_tabs_lock` | Merged into single `_tabs_lock` | Assignments modify `_tabs` dict, single lock prevents deadlocks |
+| MiniMax-M2.7 model | Configurable via `MINIMAX_MODEL` env var (default: MiniMax-M1) | Flexibility for different MiniMax models |
+| iMessage panel in frontend | No iMessage UI in dashboard | Per team decision — iMessage is purely backend, users interact via iPhone |
 
 ---
 
-## Files to Modify
+## Environment Checklist (Pre-Demo)
 
-### Backend
+```bash
+# 1. Set API keys in backend/.env
+GEMINI_API_KEY=...
+MINIMAX_API_KEY=...        # Required for intent classification + chat
+IMESSAGE_BRIDGE_URL=http://localhost:3001
+IMESSAGE_ENABLED=true
 
-| File | Change |
-|---|---|
-| `mind/graph.py` | **REWRITE**: New `build_hivemind_graph()` with intent routing. Keep calling existing `queen.execute_task()` internals from graph nodes. |
-| `mind/state.py` | Add `HiveMindState` TypedDict. Keep existing `MindState`/`WorkerState`. |
-| `config.py` | Add `MINIMAX_API_KEY`, `MINIMAX_MODEL`, `IMESSAGE_BRIDGE_URL`, `IMESSAGE_ENABLED` |
-| `main.py` | Include `routers.imessage`, bridge health-check in lifespan |
-| `models/events.py` | Add `IMESSAGE_RECEIVED`, `IMESSAGE_SENT`, `IMESSAGE_STATUS` event types |
-| `.env.template` | Add MiniMax + iMessage bridge env vars |
-| `requirements.txt` | Already has `openai` -- no new deps needed |
+# 2. Start Chrome with CDP
+chrome --remote-debugging-port=9222 --remote-allow-origins=*
 
-### Backend Bug Fixes
+# 3. Start backend (MUST restart to pick up new routes)
+cd backend && uvicorn main:app --reload --port 8080
 
-| File | Bug | Fix |
-|---|---|---|
-| `mind/worker.py` ~L282 | Agent logs memory leak: `call_later(60)` unreliable, no max-size guard | Add `len(agent_logs) > 100` pruning + use `asyncio.get_running_loop().call_later()` |
-| `services/tab_manager.py` | Screenshot cache grows unbounded | LRU eviction: only keep screenshots for open tabs, remove on tab close |
-| `mind/queen.py` ~L276-312 | Subtask dependency execution broken: runs ALL dependent after ALL independent | Build proper DAG, execute in topological order, pass completed results to dependents |
+# 4. Start frontend
+cd frontend && npm run dev
 
-### Frontend
+# 5. Start iMessage bridge (macOS only, Person B)
+cd backend/imessage-bridge && npm start
 
-No iMessage-specific UI components. Person A redesigns the existing swarm dashboard (hex canvas, agents, logs, command bar) using **Stitch** (Google design tool). The dashboard shows swarm activity regardless of whether the task was triggered from iMessage or the web CommandBar.
-
----
-
-## Team Assignments
-
-### Person A (Non-tech) -- Dashboard Redesign + Demo + Pitch
-Person A redesigns the existing swarm dashboard using **Stitch** (Google design tool). No iMessage knowledge needed -- Person A only touches the visual layer of the existing hex canvas, agent panels, and command bar.
-
-| # | Task | Effort | Blocked By | Priority |
-|---|---|---|---|---|
-| A1 | Redesign dashboard layout in Stitch -- hex canvas, overall page structure, spacing, color palette | 4h | -- | P0 |
-| A2 | Redesign CommandBar, EventFeed ticker, and AgentLogPanel for cleaner look | 3h | -- | P0 |
-| A3 | Redesign QueenNode, WorkerNode, and TabNode hex visuals (shapes, glows, status indicators) | 3h | -- | P0 |
-| A4 | Add a landing/hero page or onboarding screen for the hackathon demo | 2h | -- | P1 |
-| A5 | Build pitch deck -- "Text your AI" narrative, architecture diagrams, market positioning | 4h | -- | P0 |
-| A6 | Prepare demo script + talking points (3-min flow) | 2h | -- | P1 |
-| A7 | Record backup demo video | 1h | Working demo | P2 |
-| A8 | Apply Stitch designs to React components (with help from others if needed) | 3h | A1-A3 | P1 |
-
-### Person B -- iMessage Kit Integration + Bug Fixes
-Person B owns the Photon iMessage Kit sidecar (TypeScript/Node.js on macOS) and fixing existing backend bugs. No frontend work -- iMessage is purely backend.
-
-| # | Task | Effort | Blocked By | Priority |
-|---|---|---|---|---|
-| B1 | Set up `backend/imessage-bridge/` Node.js project + install Photon SDK | 1h | -- | P0 |
-| B2 | Implement Photon polling + webhook POST to FastAPI on new message | 3h | B1 | P0 |
-| B3 | Implement `/send` endpoint for outbound iMessages (text + file attachments) | 2h | B1 | P0 |
-| B4 | Fix `worker.py` agent_logs memory leak (~L282) | 0.5h | -- | P1 |
-| B5 | Fix `tab_manager.py` screenshot cache bloat | 0.5h | -- | P1 |
-| B6 | Fix `queen.py` subtask dependency DAG execution (~L276-312) | 2h | -- | P1 |
-| B7 | End-to-end test: send iMessage -> swarm runs -> reply arrives on phone | 2h | B2, B3, C6 | P1 |
-
-### Person C -- LangGraph + MiniMax (Backend Logic)
-| # | Task | Effort | Blocked By | Priority |
-|---|---|---|---|---|
-| C1 | Create `services/minimax_client.py` (OpenAI SDK + MiniMax base_url) | 2h | API key | P0 |
-| C2 | Test intent classification accuracy (10+ sample messages) | 1h | C1 | P0 |
-| C3 | Extend `mind/state.py` with `HiveMindState` | 1h | -- | P0 |
-| C4 | Rewrite `mind/graph.py` with full LangGraph intent routing flow | 4h | C1, C3 | P0 |
-| C5 | Implement parallel chat graph (`build_chat_graph()`) | 2h | C4 | P1 |
-| C6 | Wire graph invocation from `routers/imessage.py` webhook handler | 1h | C4, D1 | P1 |
-
-### Person D -- API Routes + Sender Services (Backend Logic)
-| # | Task | Effort | Blocked By | Priority |
-|---|---|---|---|---|
-| D1 | Create `routers/imessage.py` (webhook + send + conversations endpoints) | 2h | -- | P0 |
-| D2 | Create `services/imessage_sender.py` (HTTP client to bridge's /send) | 2h | -- | P0 |
-| D3 | Create `services/conversation_store.py` + update config/events/main.py | 2h | -- | P0 |
-| D4 | Implement iMessage status updates during swarm execution | 2h | D2, C4 | P1 |
-| D5 | Screenshot-as-iMessage-attachment feature (send tab screenshots back) | 1h | D2 | P1 |
-| D6 | Add MiniMax fallback-to-Gemini wrapper in minimax_client.py | 1h | C1 | P1 |
-
-### Critical Path
-```
-C1 (minimax) --> C4 (graph) --> C6 (wire) --+
-                                             |
-D1 (router) + D2 (sender) + D3 (config) ---+--> B7 (e2e iMessage test)
-                                             |
-B1 (bridge) --> B2 (webhook) --> B3 (/send)-+
-                                             |
-A1 (Stitch redesign) --> A8 (apply to React) --> A5 (pitch) --> DEMO
+# 6. Open some tabs in Chrome for the hex canvas demo
+# 7. Navigate to http://localhost:5173
 ```
 
-**Day 1 parallel starts**: C1 + D1 + D2 + D3 + B1 + A1 -- all independent, everyone productive immediately.
-Person A works completely independently in Stitch -- zero overlap with backend or iMessage work.
-
 ---
 
-## Demo Script (3 minutes)
+## Test Commands
 
-**[0:00-0:30] Hook**
-- Show phone. Send iMessage: *"Hey HIVEMIND, compare AirPods Pro prices on Amazon vs Best Buy"*
-- Dashboard lights up -- iMessage panel shows incoming message, intent badge: "SWARM"
+```bash
+# Verify backend routes load
+cd backend && python -c "from main import app; print(len(app.routes), 'routes')"
 
-**[0:30-1:00] Swarm Deployment**
-- Queen decomposes: 2 agents spawn on hex grid
-- Phone gets iMessage: *"Deploying 2 agents to compare prices..."*
-- Chrome tabs open live on screen
+# Run Playwright E2E tests
+python tests/e2e_playwright.py
 
-**[1:00-1:45] Concurrent Chat (the "wow" moment)**
-- While swarm runs, send another iMessage: *"What's the battery life of AirPods Pro 2?"*
-- Phone gets instant MiniMax answer within 3 seconds -- WHILE swarm agents are still navigating
-- Dashboard shows both: swarm progress + parallel chat exchange
+# Test iMessage webhook (after backend restart)
+curl -X POST http://localhost:8080/api/v1/imessage/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Search Amazon for AirPods","from_phone":"+15551234567","to_phone":"+15559876543","message_id":"test-001","timestamp":"2026-03-28T12:00:00"}'
 
-**[1:45-2:15] Results Delivered**
-- Swarm completes. Phone receives:
-  > *Amazon: $189.99 (Prime eligible)*
-  > *Best Buy: $199.99 (open box $179.99)*
-  > *Best deal: Best Buy open-box saves $10*
+# Test iMessage health
+curl http://localhost:8080/api/v1/imessage/health
 
-**[2:15-2:45] Architecture Slide**
-- "MiniMax handles all conversations at $0.30/M tokens"
-- "Gemini handles browser control where vision matters"
-- "LangGraph routes everything as a state machine"
-- "No app install. Just iMessage."
-
-**[2:45-3:00] Close**
-- "HIVEMIND: text your AI, command a swarm."
-
----
-
-## Risks & Mitigations
-
-| Risk | Mitigation |
-|---|---|
-| macOS-only for iMessage Kit | Person B secures Mac on Day 1 (has one). Backup: demo from web UI |
-| Photon SDK bugs with chat.db | Test early. Fallback: direct SQLite query + `osascript` |
-| MiniMax API downtime | `minimax_client.py` has `_fallback_to_gemini()` wrapper |
-| LangGraph rewrite breaks existing flow | Rewrite incrementally. Graph nodes call existing `execute_task()` internals, don't rewrite worker/browser plumbing |
-| Demo latency (swarm takes 30-60s) | Pre-warm Chrome tabs. Use simple 2-agent task. Chat agent fills dead time |
-| macOS security blocks AppleScript send | Pre-approve Accessibility + Full Disk Access + Automation before demo |
-| Race conditions from concurrent iMessages | `conversation_store.py` uses asyncio locks. One active swarm per conversation. |
-
----
-
-## Verification Plan
-
-1. **Unit test MiniMax client**: Call `classify_intent()` with 10 sample messages, verify accuracy > 80%
-2. **Unit test iMessage bridge**: Send test message via `/send`, verify it arrives on phone
-3. **Integration test webhook flow**: Send iMessage -> verify webhook fires -> verify LangGraph invocation
-4. **Integration test full loop**: Send "search Amazon for X" via iMessage -> verify agents spawn -> verify reply arrives
-5. **Concurrent chat test**: Start a swarm task, immediately send info query -> verify both complete
-6. **Frontend test**: Verify iMessage panel shows conversations, intent badges, and real-time updates
-7. **Bug fix verification**: Run 5+ tasks with 3+ subtasks each, verify no agent_logs leak or screenshot bloat
+# Run unit tests
+cd backend && python -m pytest tests/ -v
+```

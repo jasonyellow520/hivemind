@@ -12,6 +12,8 @@ from services.browser_manager import browser_manager
 from services.websocket_manager import manager as ws_manager
 from services import elevenlabs_service
 from services.mistral_client import gemini_chat
+from services import imessage_sender
+from services import conversation_store
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +85,9 @@ async def run_worker(
     # Resolve per-task memory; fall back to the global latest memory for compat
     memory = (get_memory(task_id) if task_id else None) or get_active_memory()
 
+    # Get phone number for iMessage updates
+    phone_number = await conversation_store.get_phone_number_for_task(task_id) if task_id else None
+
     await ws_manager.broadcast(
         events.agent_spawned(
             agent_id, subtask.description, subtask_index,
@@ -125,6 +130,14 @@ async def run_worker(
             agent_id, output_text[:200], current_url, f"step-{step_count}", task_id=task_id))
         await ws_manager.broadcast(events.agent_status(
             agent_id, AgentStatusEnum.RUNNING, step_count, task_id=task_id))
+
+        # Send iMessage status update
+        if phone_number and (step_count == 1 or step_count % 3 == 0):
+            try:
+                status_text = f"Agent {agent_id} (step {step_count}): {output_text[:100]}"
+                await imessage_sender.send_status_update(phone_number, status_text, task_id)
+            except Exception as e:
+                logger.warning(f"Failed to send iMessage status update from worker: {e}")
 
         # Queen narration: fire on step 1 and every 3 steps
         if step_count == 1 or step_count % 3 == 0:
@@ -277,6 +290,8 @@ async def run_worker(
                 await tm.unassign_agent(tab_id)
             except Exception:
                 pass
-        # Schedule log cleanup after 60 s to avoid unbounded memory growth
-        loop = asyncio.get_event_loop()
-        loop.call_later(60, lambda: agent_logs.pop(agent_id, None))
+        # Schedule log cleanup after 60s to avoid unbounded memory growth
+        async def _cleanup_logs(aid: str, delay: float = 60.0):
+            await asyncio.sleep(delay)
+            agent_logs.pop(aid, None)
+        asyncio.create_task(_cleanup_logs(agent_id))

@@ -184,6 +184,30 @@ export function useWebSocket() {
         })
         break
 
+      case 'IMESSAGE_RECEIVED':
+        store.pushFeed({
+          type: 'info',
+          text: `iMessage from ${data.from_phone || 'unknown'}: ${(data.text || '').slice(0, 80)}`,
+          timestamp: event.timestamp,
+        })
+        break
+
+      case 'IMESSAGE_SENT':
+        store.pushFeed({
+          type: 'info',
+          text: `iMessage sent to ${data.to_phone || 'unknown'}: ${(data.text || '').slice(0, 80)}`,
+          timestamp: event.timestamp,
+        })
+        break
+
+      case 'IMESSAGE_STATUS_UPDATE':
+        store.pushFeed({
+          type: 'info',
+          text: `iMessage status: ${data.status || ''} (${data.phone_number || ''})`,
+          timestamp: event.timestamp,
+        })
+        break
+
       case 'VOICE_ANNOUNCEMENT':
         if (data.audio_b64) {
           store.setVoice(true, data.text)
