@@ -147,6 +147,7 @@ async def run_playwright_agent(
 
     browser: Optional[Browser] = None
     page: Optional[Page] = None
+    created_new_page = False
     pw = await async_playwright().start()
     try:
         browser = await pw.chromium.connect_over_cdp(cdp_url)
@@ -156,16 +157,26 @@ async def run_playwright_agent(
         context = contexts[0]
         pages = context.pages
 
-        if not pages:
-            page = await context.new_page()
-            if start_url:
-                await page.goto(start_url, wait_until="domcontentloaded", timeout=15000)
-        else:
-            if page_index is not None and 0 <= page_index < len(pages):
-                page = pages[page_index]
+        # Filter out dashboard/backend pages — agents must never touch these
+        safe_pages = [p for p in pages if not _is_blocked_url(p.url)]
+
+        if page_index is not None and 0 <= page_index < len(pages):
+            candidate = pages[page_index]
+            if _is_blocked_url(candidate.url):
+                logger.warning("Target page index %d is a protected page (%s), creating new tab",
+                               page_index, candidate.url)
+                page = await context.new_page()
+                created_new_page = True
             else:
-                page = pages[0]
-            if start_url and page.url != start_url and "about:blank" in page.url:
+                page = candidate
+        elif safe_pages:
+            page = safe_pages[0]
+        else:
+            page = await context.new_page()
+            created_new_page = True
+
+        if start_url:
+            if created_new_page or (page.url != start_url and "about:blank" in page.url):
                 await page.goto(start_url, wait_until="domcontentloaded", timeout=15000)
 
         step = 0
@@ -248,6 +259,12 @@ async def run_playwright_agent(
 
         return last_result or "Max steps reached."
     finally:
+        # Close the page first so the tab doesn't linger as a CDP ghost
+        if page:
+            try:
+                await page.close()
+            except Exception:
+                pass
         if browser:
             try:
                 await browser.close()
