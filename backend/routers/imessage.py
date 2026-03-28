@@ -86,46 +86,73 @@ async def receive_message(webhook_data: WebhookMessage, background_tasks: Backgr
 
 
 async def _process_incoming_message(message: WebhookMessage):
-    """Process incoming iMessage through the LangGraph Dispatcher."""
+    """Process incoming iMessage through the unified orchestrator."""
     try:
-        from mind.graph import build_hivemind_graph
-        from services import conversation_store
+        from mind.orchestrator import process
+        from services import conversation_store, imessage_sender
 
         # Load conversation history for context
         history = await conversation_store.get_messages_by_conversation(
             message.from_phone, limit=10
         )
 
-        graph = build_hivemind_graph()
-        initial_state = {
-            "message_id": message.message_id,
-            "from_phone": message.from_phone,
-            "to_phone": message.to_phone,
-            "message_text": message.text,
-            "conversation_history": history,
-            "intent": "",
-            "intent_confidence": 0.0,
-            "task_id": "",
-            "master_task": "",
-            "subtasks": [],
-            "worker_results": {},
-            "final_result": "",
-            "reply_text": "",
-            "reply_sent": False,
-            "phase": "received",
-            "errors": [],
-            "retry_count": 0,
-        }
+        full_reply = ""
+        task_dispatched = False
 
-        result = await graph.ainvoke(initial_state)
-        logger.info("Dispatcher completed for message %s: intent=%s, phase=%s",
-                    message.message_id, result.get("intent"), result.get("phase"))
+        async for event in process(
+            text=message.text,
+            conversation_history=history,
+            source="imessage",
+        ):
+            if event["type"] == "text":
+                full_reply += event["content"]
+            elif event["type"] == "task_dispatched":
+                task_dispatched = True
+                task_id = event["task_id"]
+                full_reply = event["message"]
+                # Associate task with phone for status updates
+                try:
+                    await conversation_store.associate_task_with_conversation(
+                        task_id, message.from_phone
+                    )
+                except Exception:
+                    pass
+
+        # Send reply via iMessage
+        if full_reply:
+            try:
+                await imessage_sender.send_imessage(
+                    to_phone=message.from_phone,
+                    text=full_reply,
+                )
+                logger.info(
+                    "Orchestrator reply sent to %s: %s",
+                    message.from_phone,
+                    full_reply[:60],
+                )
+            except Exception as e:
+                logger.error("Failed to send iMessage reply: %s", e)
+
+        # Store outbound message
+        try:
+            from datetime import datetime
+
+            await conversation_store.add_message(
+                message_id=f"reply-{message.message_id}",
+                from_phone="system",
+                to_phone=message.from_phone,
+                text=full_reply,
+                timestamp=datetime.utcnow(),
+                direction="outbound",
+            )
+        except Exception:
+            pass
 
     except Exception as e:
-        logger.error(f"Dispatcher failed for message {message.message_id}: {e}")
-        # Fallback: try to send an error reply
+        logger.error("Orchestrator failed for message %s: %s", message.message_id, e)
         try:
             from services import imessage_sender
+
             await imessage_sender.send_imessage(
                 to_phone=message.from_phone,
                 text="Sorry, I had trouble processing that. Please try again.",

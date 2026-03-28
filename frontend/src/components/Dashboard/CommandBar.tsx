@@ -7,7 +7,6 @@ const SLASH_COMMANDS = [
   { cmd: '/scan', desc: 'Scan browser tabs' },
   { cmd: '/tabs', desc: 'Open tab panel' },
   { cmd: '/open', desc: 'Open a new tab [url]' },
-  { cmd: '/task', desc: 'Force task mode for this input' },
   { cmd: '/clear', desc: 'Reset the mind' },
   { cmd: '/help', desc: 'Show available commands' },
 ]
@@ -36,7 +35,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
   const [showHistory, setShowHistory] = useState(false)
   const [historyItems, setHistoryItems] = useState<{content: string; title: string}[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
-  const [mode, setMode] = useState<'task' | 'chat'>('chat')
+  // Mode removed — unified orchestrator handles classification
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([])
   const [chatOpen, setChatOpen] = useState(false)
   const [liveVoiceMessages, setLiveVoiceMessages] = useState<ChatMsg[]>([])
@@ -201,7 +200,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
               role !== 'model'
 
             if (shouldDispatchVoiceTask) {
-              setLiveVoiceMessages((prev) => [...prev, { role: 'user', text }].slice(-30))
+              setLiveVoiceMessages((prev) => [...prev, { role: 'user' as const, text }].slice(-30))
               useMindStore.getState().pushFeed({
                 type: 'info',
                 text: `User (voice): ${text.slice(0, 160)}`,
@@ -217,10 +216,10 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
               lastVoiceDispatchRef.current = { text, at: now }
 
               // Voice commands bypass the text input and dispatch directly.
-              void fetch('/api/v1/tasks/submit', {
+              void fetch('/api/v1/input/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ task: text }),
+                body: JSON.stringify({ message: text }),
               })
                 .then(async (res) => {
                   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -249,7 +248,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                   const last = prev[prev.length - 1]
                   if (last.role === 'assistant' && last.text === spkText) return prev
                 }
-                return [...prev, { role: 'assistant', text: spkText }].slice(-30)
+                return [...prev, { role: 'assistant' as const, text: spkText }].slice(-30)
               })
             }
             // Play audio response. For PCM chunks from Live API, prefer browser
@@ -347,6 +346,22 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages])
 
+  // When a task completes or fails via WebSocket, show the result in the chat panel
+  const taskStatus = useMindStore((s) => s.task.status)
+  const taskFinalResult = useMindStore((s) => s.task.finalResult)
+  const prevTaskStatusRef = useRef(taskStatus)
+  useEffect(() => {
+    const wasRunning = prevTaskStatusRef.current === 'running' || prevTaskStatusRef.current === 'decomposing'
+    if (wasRunning && taskStatus === 'completed' && taskFinalResult) {
+      setChatOpen(true)
+      setChatMessages((prev) => [...prev, { role: 'assistant' as const, text: taskFinalResult }])
+    } else if (wasRunning && taskStatus === 'failed') {
+      setChatOpen(true)
+      setChatMessages((prev) => [...prev, { role: 'assistant' as const, text: 'Task failed. Check the agent logs for details.' }])
+    }
+    prevTaskStatusRef.current = taskStatus
+  }, [taskStatus, taskFinalResult])
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [liveVoiceMessages])
@@ -386,10 +401,6 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
         } catch {}
         break
       }
-      case '/task':
-        setMode('task')
-        setInput(parts.slice(1).join(' '))
-        break
       case '/clear':
         reset()
         setChatMessages([])
@@ -502,6 +513,99 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
     }
   }, [])
 
+  const sendUnified = useCallback(async (message: string) => {
+    setChatOpen(true)
+    setChatMessages((prev) => [...prev, { role: 'user', text: message }])
+    setIsSubmitting(true)
+
+    try {
+      const res = await fetch('/api/v1/input/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      })
+
+      if (!res.ok || !res.body) throw new Error('Stream unavailable')
+
+      setChatMessages((prev) => [...prev, { role: 'assistant', text: '' }])
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let fullReply = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const text = decoder.decode(value, { stream: true })
+        const lines = text.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const payload = line.slice(6).trim()
+            if (payload === '[DONE]') continue
+            try {
+              const parsed = JSON.parse(payload)
+              if (parsed.type === 'text' && parsed.text) {
+                fullReply += parsed.text
+                const reply = fullReply
+                setChatMessages((prev) => {
+                  const updated = [...prev]
+                  updated[updated.length - 1] = { role: 'assistant', text: reply }
+                  return updated
+                })
+              } else if (parsed.type === 'task_dispatched') {
+                fullReply = parsed.text || 'Working on it...'
+                const reply = fullReply
+                setChatMessages((prev) => {
+                  const updated = [...prev]
+                  updated[updated.length - 1] = { role: 'assistant', text: reply }
+                  return updated
+                })
+                const store = useMindStore.getState()
+                store.setTask({
+                  masterTask: message,
+                  status: 'decomposing',
+                  finalResult: null,
+                  agentResults: [],
+                })
+              }
+            } catch {
+              // Skip malformed chunks
+            }
+          }
+        }
+      }
+
+      useMindStore.getState().pushFeed({
+        type: 'log',
+        text: `> ${fullReply.slice(0, 60)}`,
+        timestamp: new Date().toISOString(),
+      })
+    } catch {
+      // Fallback to old chat endpoint
+      try {
+        const res = await fetch('/api/v1/chat/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        })
+        const data = await res.json()
+        setChatMessages((prev) => {
+          const last = prev[prev.length - 1]
+          if (last?.role === 'assistant' && last.text === '') {
+            const updated = [...prev]
+            updated[updated.length - 1] = { role: 'assistant', text: data.reply || 'No response.' }
+            return updated
+          }
+          return [...prev, { role: 'assistant', text: data.reply || 'No response.' }]
+        })
+      } catch {
+        setChatMessages((prev) => [...prev, { role: 'assistant', text: 'Connection error. Is the backend running?' }])
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [])
+
   const sendTask = useCallback(async (trimmed: string) => {
     const store = useMindStore.getState()
 
@@ -578,18 +682,15 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
       return
     }
 
-    // Tab-selected mode always routes as a task
+    // Tab-selected mode still routes directly as a task to that specific tab
     if (selectedTab) {
       await sendTask(trimmed)
       return
     }
 
-    if (mode === 'task') {
-      await sendTask(trimmed)
-    } else {
-      await sendChat(trimmed)
-    }
-  }, [input, isSubmitting, pushCommand, handleSlashCommand, mode, selectedTab, sendTask, sendChat])
+    // Everything else goes through the unified orchestrator
+    await sendUnified(trimmed)
+  }, [input, isSubmitting, pushCommand, handleSlashCommand, selectedTab, sendTask, sendUnified])
 
   const slashMatches = input.startsWith('/')
     ? SLASH_COMMANDS.filter((c) => c.cmd.startsWith(input.toLowerCase()))
@@ -624,8 +725,8 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
     }
   }
 
-  const modeLabel = selectedTab ? `→ ${domain(selectedTab.url)}` : mode === 'task' ? 'TASK' : 'CHAT'
-  const modeColor = mode === 'task' ? '#8b5cf6' : '#00d4ff'
+  const modeLabel = selectedTab ? `→ ${domain(selectedTab.url)}` : 'MIND'
+  const modeColor = '#00d4ff'
 
   return (
     <div className="relative">
@@ -737,7 +838,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                   </div>
                 </div>
               ))}
-              {isSubmitting && mode === 'chat' && (
+              {isSubmitting && (
                 <div className="flex justify-start">
                   <motion.div
                     animate={{ opacity: [0.4, 1, 0.4] }}
@@ -855,7 +956,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
 
       {/* Example task suggestions (idle state only) */}
       <AnimatePresence>
-        {task.status === 'idle' && !input && mode === 'task' && !chatOpen && (
+        {task.status === 'idle' && !input && !chatOpen && (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -914,22 +1015,15 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setMode((m) => m === 'chat' ? 'task' : 'chat')}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all"
-              style={{
-                background: `${modeColor}10`,
-                border: `1px solid ${modeColor}30`,
-              }}
-              title={`Mode: ${modeLabel}. Click to switch.`}
+            <div
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+              style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)' }}
             >
-              {mode === 'chat'
-                ? <MessageSquare className="w-3 h-3" style={{ color: modeColor }} />
-                : <Cpu className="w-3 h-3" style={{ color: modeColor }} />}
-              <span className="terminal-text text-[10px] font-semibold" style={{ color: modeColor }}>
-                {modeLabel}
+              <Terminal className="w-3 h-3" style={{ color: '#00d4ff' }} />
+              <span className="terminal-text text-[10px] font-semibold" style={{ color: '#00d4ff' }}>
+                MIND
               </span>
-            </button>
+            </div>
           )}
           <motion.span
             animate={{ opacity: [1, 0, 1] }}
@@ -958,11 +1052,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
               ? `Give AI a task for ${domain(selectedTab.url)}...`
               : isRunning
                 ? 'Mind is processing...'
-                : mode === 'chat'
-                  ? 'Chat with Mindd AI... (switch to Task mode with /task)'
-                  : 'Describe a browser task for agents... (Ctrl+K)'
+                : 'Ask anything or give a task... (Ctrl+K)'
           }
-          disabled={isSubmitting && mode === 'task'}
+          disabled={isSubmitting}
           className="flex-1 bg-transparent focus:outline-none terminal-text"
           style={{
             fontSize: '13px',
@@ -1075,7 +1167,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleSubmit}
-          disabled={!input.trim() || (isSubmitting && mode === 'task')}
+          disabled={!input.trim() || isSubmitting}
           className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all"
           style={{
             background: input.trim() ? `${modeColor}18` : 'rgba(255,255,255,0.04)',
@@ -1083,7 +1175,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             color: input.trim() ? modeColor : 'rgba(255,255,255,0.2)',
           }}
         >
-          {isSubmitting && mode === 'task' ? (
+          {isSubmitting ? (
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}

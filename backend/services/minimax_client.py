@@ -149,6 +149,62 @@ async def chat_with_context(
         return "I'm working on your task — hang tight!"
 
 
+async def answer_with_context(
+    question: str,
+    rag_context: str,
+    conversation_history: list[dict] | None = None,
+) -> str:
+    """Answer a question using RAG context from supermemory."""
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are HIVEMIND, an AI assistant backed by a browser automation swarm. "
+                "Answer the user's question using ONLY the context provided below. "
+                "If the context doesn't fully answer the question, say what you know "
+                "and mention that the information may be outdated.\n\n"
+                f"Context from memory:\n{rag_context}"
+            ),
+        },
+    ]
+    if conversation_history:
+        for m in conversation_history[-8:]:
+            role = "user" if m.get("direction") == "inbound" else "assistant"
+            text = m.get("text") or m.get("content") or ""
+            if text:
+                messages.append({"role": role, "content": text})
+    messages.append({"role": "user", "content": question})
+
+    try:
+        return await get_minimax_completion(messages, temperature=0.3, max_tokens=1024)
+    except Exception as e:
+        logger.error(f"answer_with_context failed: {e}")
+        raise
+
+
+async def format_status_reply(
+    question: str,
+    status_data: str,
+) -> str:
+    """Format a status query response using MiniMax."""
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are HIVEMIND. The user is asking about the status of running tasks. "
+                "Format the status data below into a clear, concise reply.\n\n"
+                f"Current status:\n{status_data}"
+            ),
+        },
+        {"role": "user", "content": question},
+    ]
+    try:
+        return await get_minimax_completion(messages, temperature=0.3, max_tokens=512)
+    except Exception as e:
+        logger.error(f"format_status_reply failed: {e}")
+        return status_data
+
+
 async def synthesize_results(original_task: str, agent_outputs: str) -> str:
     """Summarize agent results into a user-friendly iMessage reply."""
     messages = [

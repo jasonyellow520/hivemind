@@ -125,8 +125,10 @@ class TabManager:
                     if old_id not in current_ids:
                         self._tabs.pop(old_id, None)
                         self._cdp_targets.pop(old_id, None)
-                # Clear closed IDs for tabs that genuinely disappeared from CDP
-                self._closed_ids -= self._closed_ids - all_cdp_ids
+                # Keep _closed_ids around even after CDP stops listing them,
+                # so ghosts don't reappear. Only prune IDs older than what
+                # CDP has ever returned (i.e. never prune — accumulate).
+                # The set is small (bounded by total tabs ever closed in session).
 
                 logger.debug(f"Synced {len(page_targets)} Chrome tabs")
                 return list(self._tabs.values())

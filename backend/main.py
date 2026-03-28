@@ -5,7 +5,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from services.websocket_manager import manager as ws_manager
 from models.events import WSEvent, EventType
-from routers import tasks, hitl, agents, tabs, chat, screencast, memory, voice, imessage
+from routers import tasks, hitl, agents, tabs, chat, screencast, memory, voice, imessage, input
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ app.include_router(screencast.router)
 app.include_router(memory.router)
 app.include_router(voice.router)
 app.include_router(imessage.router)
+app.include_router(input.router)
 
 
 @app.websocket("/ws")
