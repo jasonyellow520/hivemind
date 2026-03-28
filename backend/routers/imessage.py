@@ -54,7 +54,7 @@ async def receive_message(webhook_data: WebhookMessage, background_tasks: Backgr
     This endpoint is called by the iMessage bridge when a new message arrives.
     """
     try:
-        logger.info(f"Received iMessage webhook: {webhook_data.message_id} from {webhook_data.from_phone}")
+        logger.info(f"Received iMessage webhook: Message ID={webhook_data.message_id}, From={webhook_data.from_phone}, Text=\"{webhook_data.text}\"")
         
         # Store the message in conversation history
         await conversation_store.add_message(

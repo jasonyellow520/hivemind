@@ -39,8 +39,9 @@ def main():
     print(f"  Press Ctrl+C to stop both.\n")
 
     # Start backend
+    backend_python = os.path.join(BACKEND_DIR, "venv", "bin", "python")
     backend = subprocess.Popen(
-        [sys.executable, "run.py"],
+        [backend_python, "run.py"],
         cwd=BACKEND_DIR,
     )
     processes.append(backend)

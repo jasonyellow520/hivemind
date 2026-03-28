@@ -1,0 +1,20 @@
+{
+  "name": "imessage-bridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@photon-ai/imessage-kit": "^2.1.2",
+    "axios": "^1.14.0",
+    "better-sqlite3": "^12.8.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  }
+}
