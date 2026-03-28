@@ -8,67 +8,75 @@
 
 | Person | Role | Focus Area |
 |--------|------|------------|
-| **Person A** | UI/Demo/Pitch | Non-tech. Mockups, pitch deck, demo script |
-| **Person B** | iMessage Bridge + Frontend | Photon iMessage Kit (TypeScript), iMessage UI panel |
+| **Person A** | Website Redesign + Demo + Pitch | Non-tech. Redesign the entire dashboard UI, build pitch deck, prepare demo |
+| **Person B** | iMessage Kit + Bug Fixes | Photon iMessage Kit (TypeScript sidecar), frontend event wiring, existing bug fixes |
 | **Person C** | Backend Logic | LangGraph redesign, MiniMax integration |
-| **Person D** | Backend Logic | API routes, sender service, bug fixes |
+| **Person D** | Backend Logic | API routes, sender service, conversation store |
 
 ---
 
 ## Task Board
 
-### Person A (UI + Demo + Pitch)
+### Person A -- Website Redesign + Demo + Pitch
 
-- [ ] **A1** Design iMessage panel mockup/wireframe (2h) `P0`
-- [ ] **A2** Build pitch deck - "Text your AI" narrative + architecture diagrams (4h) `P0`
-- [ ] **A3** Prepare demo script + talking points (2h) `P1`
-- [ ] **A4** Record backup demo video (1h) `P2`
+Person A owns the entire visual experience: redesign the dashboard, build the iMessage panel UI, create the pitch, and prep the demo.
 
-### Person B (iMessage Bridge + Frontend)
+- [ ] **A1** Redesign dashboard layout -- modernize hex canvas, improve colors/spacing/typography (4h) `P0`
+- [ ] **A2** Design + build iMessage panel UI (conversation bubbles, intent badges, status indicators) (3h) `P0`
+- [ ] **A3** Redesign CommandBar, EventFeed, and AgentLogPanel for cleaner look (3h) `P0`
+- [ ] **A4** Add landing/splash page or onboarding screen for hackathon demo (2h) `P1`
+- [ ] **A5** Build pitch deck -- "Text your AI" narrative, architecture diagrams, market positioning (4h) `P0`
+- [ ] **A6** Prepare demo script + talking points (3-min flow) (2h) `P1`
+- [ ] **A7** Record backup demo video (1h) `P2` -- blocked by working demo
+- [ ] **A8** Polish animations, transitions, loading states across the app (2h) `P1` -- blocked by A1-A3
+
+### Person B -- iMessage Kit Integration + Bug Fixes
+
+Person B owns the Photon iMessage Kit sidecar (TypeScript/Node.js on macOS), wires iMessage events into the frontend, and fixes existing backend bugs.
 
 - [ ] **B1** Set up `backend/imessage-bridge/` Node.js project + install Photon SDK (1h) `P0`
-- [ ] **B2** Implement Photon polling + webhook POST to FastAPI (3h) `P0`
-- [ ] **B3** Implement `/send` endpoint for outbound iMessages (2h) `P0` -- blocked by B1
-- [ ] **B4** Build `iMessagePanel.tsx` + `ConversationBubble.tsx` (3h) `P1` -- blocked by A1
-- [ ] **B5** Wire WebSocket iMessage events in frontend store (1h) `P1` -- blocked by D3
-- [ ] **B6** Add iMessage panel toggle to `App.tsx` (1h) `P1` -- blocked by B4
-- [ ] **B7** End-to-end test: iMessage -> dashboard -> reply (2h) `P1` -- blocked by all above
+- [ ] **B2** Implement Photon polling + webhook POST to FastAPI on new message (3h) `P0` -- blocked by B1
+- [ ] **B3** Implement `/send` endpoint for outbound iMessages (text + file attachments) (2h) `P0` -- blocked by B1
+- [ ] **B4** Wire WebSocket iMessage events in frontend store (`useMindStore.ts`, `useWebSocket.ts`) (2h) `P1` -- blocked by D3
+- [ ] **B5** Add iMessage panel toggle to `App.tsx` + 'M' keyboard shortcut (1h) `P1` -- blocked by A2
+- [ ] **B6** Fix `worker.py` agent_logs memory leak (~L282) (0.5h) `P1`
+- [ ] **B7** Fix `tab_manager.py` screenshot cache bloat (0.5h) `P1`
+- [ ] **B8** Fix `queen.py` subtask dependency DAG execution (~L276-312) (2h) `P1`
+- [ ] **B9** End-to-end test: iMessage -> dashboard -> swarm runs -> reply arrives (2h) `P1` -- blocked by all above
 
-### Person C (LangGraph + MiniMax)
+### Person C -- LangGraph + MiniMax (Backend Logic)
 
-- [ ] **C1** Create `backend/services/minimax_client.py` using OpenAI SDK (2h) `P0`
+- [ ] **C1** Create `backend/services/minimax_client.py` using OpenAI SDK + MiniMax base_url (2h) `P0`
 - [ ] **C2** Test intent classification with 10+ sample messages (1h) `P0` -- blocked by C1
 - [ ] **C3** Extend `backend/mind/state.py` with `HiveMindState` (1h) `P0`
-- [ ] **C4** Rewrite `backend/mind/graph.py` with LangGraph intent routing (4h) `P0` -- blocked by C1, C3
+- [ ] **C4** Rewrite `backend/mind/graph.py` with LangGraph intent routing flow (4h) `P0` -- blocked by C1, C3
 - [ ] **C5** Implement parallel chat graph `build_chat_graph()` (2h) `P1` -- blocked by C4
-- [ ] **C6** Wire graph invocation from `routers/imessage.py` (1h) `P1` -- blocked by C4, D1
+- [ ] **C6** Wire graph invocation from `routers/imessage.py` webhook (1h) `P1` -- blocked by C4, D1
 
-### Person D (Router/Sender + Bug Fixes)
+### Person D -- API Routes + Sender Services (Backend Logic)
 
-- [ ] **D1** Create `backend/routers/imessage.py` (webhook + send + conversations) (2h) `P0`
-- [ ] **D2** Create `backend/services/imessage_sender.py` (bridge HTTP client) (2h) `P0`
-- [ ] **D3** Create `backend/services/conversation_store.py` + update config/events/main (2h) `P0`
-- [ ] **D4** Fix `worker.py` agent_logs memory leak (~L282) (0.5h) `P1`
-- [ ] **D5** Fix `tab_manager.py` screenshot cache bloat (0.5h) `P1`
-- [ ] **D6** Fix `queen.py` subtask dependency DAG execution (~L276-312) (2h) `P1`
-- [ ] **D7** Implement iMessage status updates during swarm execution (2h) `P1` -- blocked by D2, C4
-- [ ] **D8** Screenshot-as-iMessage-attachment feature (1h) `P2` -- blocked by D2
+- [ ] **D1** Create `backend/routers/imessage.py` (webhook + send + conversations endpoints) (2h) `P0`
+- [ ] **D2** Create `backend/services/imessage_sender.py` (HTTP client to bridge /send) (2h) `P0`
+- [ ] **D3** Create `backend/services/conversation_store.py` + update config/events/main.py (2h) `P0`
+- [ ] **D4** Implement iMessage status updates during swarm execution (2h) `P1` -- blocked by D2, C4
+- [ ] **D5** Screenshot-as-iMessage-attachment feature (send tab screenshots back) (1h) `P1` -- blocked by D2
+- [ ] **D6** Add MiniMax fallback-to-Gemini wrapper in minimax_client.py (1h) `P1` -- blocked by C1
 
 ---
 
 ## Critical Path
 
 ```
-C1 (minimax client) --> C4 (graph rewrite) --+
-                                              |
-D1 (router) + D2 (sender) + D3 (config) ----+--> C6 (wire together) --> B7 (e2e test)
-                                              |
-B1 (bridge) --> B2 (webhook) --> B3 (/send) -+
-                                              |
-A1 (mockup) --> B4 (panel) --> B6 -----------+--> DEMO
+C1 (minimax client) --> C2 (test) --> C4 (graph rewrite) --+
+                                                            |
+D1 (router) + D2 (sender) + D3 (config) ------------------+--> C6 (wire) --> B9 (e2e)
+                                                            |
+B1 (bridge) --> B2 (webhook) --> B3 (/send) ---------------+
+                                                            |
+A1+A2+A3 (redesign) --> A5 (pitch) --> A6 (demo script) ---+--> DEMO
 ```
 
-**Start here**: C1 + D1 + D2 + D3 + B1 can all begin in parallel on Day 1.
+**Day 1 parallel starts**: C1 + D1 + D2 + D3 + B1 + A1 -- all independent, everyone productive immediately.
 
 ---
 
@@ -81,13 +89,13 @@ Each team member needs:
 git clone https://github.com/Kvndoshi/uschacks.git
 cd uschacks
 
-# Backend
+# Backend (Persons B, C, D)
 cd backend
 pip install -r requirements.txt
 playwright install chromium
 cp .env.template .env   # Fill in API keys
 
-# Frontend
+# Frontend (Persons A, B)
 cd ../frontend
 npm install
 

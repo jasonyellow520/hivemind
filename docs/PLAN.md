@@ -173,59 +173,67 @@ Separate graph for handling messages while swarm is running:
 
 ## Team Assignments
 
-### Person A (Non-tech) -- UI + Demo + Pitch
-| # | Task | Effort | Priority |
-|---|---|---|---|
-| A1 | Design iMessage panel mockup/wireframe | 2h | P0 |
-| A2 | Build pitch deck (architecture diagrams, "text your AI" narrative) | 4h | P0 |
-| A3 | Prepare demo script + talking points | 2h | P1 |
-| A4 | Record backup demo video | 1h | P2 |
+### Person A (Non-tech) -- Website Redesign + Demo + Pitch
+Person A owns the entire user-facing experience: redesigning the dashboard UI, building the pitch, and preparing the demo.
 
-### Person B -- iMessage Bridge + Frontend
 | # | Task | Effort | Blocked By | Priority |
 |---|---|---|---|---|
-| B1 | Set up `imessage-bridge/` Node.js project + Photon SDK | 1h | -- | P0 |
-| B2 | Implement webhook POST to FastAPI on new message | 3h | -- | P0 |
-| B3 | Implement `/send` endpoint (text + file attachments) | 2h | B1 | P0 |
-| B4 | Build `iMessagePanel.tsx` + `ConversationBubble.tsx` | 3h | A1 mockup | P1 |
-| B5 | Wire WebSocket iMessage events in frontend store | 1h | D3 events | P1 |
-| B6 | Add iMessage panel to `App.tsx` with toggle | 1h | B4 | P1 |
-| B7 | End-to-end test: send iMessage -> see in dashboard -> get reply | 2h | All above | P1 |
+| A1 | Redesign dashboard layout -- modernize the hex canvas, improve colors/spacing/typography | 4h | -- | P0 |
+| A2 | Design + build the iMessage panel UI (conversation bubbles, intent badges, status indicators) | 3h | -- | P0 |
+| A3 | Redesign the CommandBar, EventFeed, and AgentLogPanel for cleaner look | 3h | -- | P0 |
+| A4 | Add a landing/splash page or onboarding screen for the hackathon demo | 2h | -- | P1 |
+| A5 | Build pitch deck -- "Text your AI" narrative, architecture diagrams, market positioning | 4h | -- | P0 |
+| A6 | Prepare demo script + talking points (3-min flow) | 2h | -- | P1 |
+| A7 | Record backup demo video | 1h | Working demo | P2 |
+| A8 | Polish animations, transitions, loading states across the app | 2h | A1-A3 | P1 |
+
+### Person B -- iMessage Kit Integration + Bug Fixes
+Person B owns the Photon iMessage Kit sidecar, the frontend wiring for iMessage events, and fixing existing bugs.
+
+| # | Task | Effort | Blocked By | Priority |
+|---|---|---|---|---|
+| B1 | Set up `backend/imessage-bridge/` Node.js project + install Photon SDK | 1h | -- | P0 |
+| B2 | Implement Photon polling + webhook POST to FastAPI on new message | 3h | B1 | P0 |
+| B3 | Implement `/send` endpoint for outbound iMessages (text + file attachments) | 2h | B1 | P0 |
+| B4 | Wire WebSocket iMessage events in frontend store (`useMindStore.ts`, `useWebSocket.ts`) | 2h | D3 | P1 |
+| B5 | Add iMessage panel toggle to `App.tsx` + 'M' keyboard shortcut | 1h | A2 | P1 |
+| B6 | Fix `worker.py` agent_logs memory leak (~L282) | 0.5h | -- | P1 |
+| B7 | Fix `tab_manager.py` screenshot cache bloat | 0.5h | -- | P1 |
+| B8 | Fix `queen.py` subtask dependency DAG execution (~L276-312) | 2h | -- | P1 |
+| B9 | End-to-end test: send iMessage -> dashboard shows it -> swarm runs -> reply arrives | 2h | All above | P1 |
 
 ### Person C -- LangGraph + MiniMax (Backend Logic)
 | # | Task | Effort | Blocked By | Priority |
 |---|---|---|---|---|
-| C1 | Create `services/minimax_client.py` (OpenAI SDK + MiniMax) | 2h | API key | P0 |
+| C1 | Create `services/minimax_client.py` (OpenAI SDK + MiniMax base_url) | 2h | API key | P0 |
 | C2 | Test intent classification accuracy (10+ sample messages) | 1h | C1 | P0 |
 | C3 | Extend `mind/state.py` with `HiveMindState` | 1h | -- | P0 |
-| C4 | Rewrite `mind/graph.py` with full LangGraph flow | 4h | C1, C3 | P0 |
+| C4 | Rewrite `mind/graph.py` with full LangGraph intent routing flow | 4h | C1, C3 | P0 |
 | C5 | Implement parallel chat graph (`build_chat_graph()`) | 2h | C4 | P1 |
-| C6 | Wire graph invocation from `routers/imessage.py` webhook | 1h | C4, D1 | P1 |
+| C6 | Wire graph invocation from `routers/imessage.py` webhook handler | 1h | C4, D1 | P1 |
 
-### Person D -- Router/Sender + Bug Fixes (Backend Logic)
+### Person D -- API Routes + Sender Services (Backend Logic)
 | # | Task | Effort | Blocked By | Priority |
 |---|---|---|---|---|
-| D1 | Create `routers/imessage.py` (webhook + send + conversations) | 2h | -- | P0 |
-| D2 | Create `services/imessage_sender.py` (bridge HTTP client) | 2h | -- | P0 |
-| D3 | Create `services/conversation_store.py` + update events/config/main | 2h | -- | P0 |
-| D4 | Fix `worker.py` agent_logs memory leak | 0.5h | -- | P1 |
-| D5 | Fix `tab_manager.py` screenshot cache bloat | 0.5h | -- | P1 |
-| D6 | Fix `queen.py` subtask dependency DAG execution | 2h | -- | P1 |
-| D7 | Implement iMessage status updates during swarm execution | 2h | D2, C4 | P1 |
-| D8 | Screenshot-as-iMessage-attachment feature | 1h | D2 | P2 |
+| D1 | Create `routers/imessage.py` (webhook + send + conversations endpoints) | 2h | -- | P0 |
+| D2 | Create `services/imessage_sender.py` (HTTP client to bridge's /send) | 2h | -- | P0 |
+| D3 | Create `services/conversation_store.py` + update config/events/main.py | 2h | -- | P0 |
+| D4 | Implement iMessage status updates during swarm execution | 2h | D2, C4 | P1 |
+| D5 | Screenshot-as-iMessage-attachment feature (send tab screenshots back) | 1h | D2 | P1 |
+| D6 | Add MiniMax fallback-to-Gemini wrapper in minimax_client.py | 1h | C1 | P1 |
 
 ### Critical Path
 ```
 C1 (minimax client) --> C2 (test) --> C4 (graph rewrite) --+
                                                             |
-D1 (router) + D2 (sender) + D3 (store/config) ------------+--> C6 (wire together)
+D1 (router) + D2 (sender) + D3 (config) ------------------+--> C6 (wire) --> B9 (e2e)
                                                             |
-B1 (bridge setup) --> B2 (webhook) --> B3 (/send) ---------+--> B7 (e2e test)
+B1 (bridge) --> B2 (webhook) --> B3 (/send) ---------------+
                                                             |
-A1 (mockup) --> B4 (panel) --> B5+B6 ----------------------+--> DEMO
+A1+A2+A3 (redesign) --> A5 (pitch) --> A6 (demo script) ---+--> DEMO
 ```
 
-**Estimated total**: ~16h of parallel work per backend pair, ~13h for Person B, ~9h for Person A.
+**Day 1 parallel starts**: C1 + D1 + D2 + D3 + B1 + A1 -- all independent, everyone productive immediately.
 
 ---
 
@@ -266,7 +274,7 @@ A1 (mockup) --> B4 (panel) --> B5+B6 ----------------------+--> DEMO
 
 | Risk | Mitigation |
 |---|---|
-| macOS-only for iMessage Kit | Person B secures Mac on Day 1. Backup: demo from web UI |
+| macOS-only for iMessage Kit | Person B secures Mac on Day 1 (has one). Backup: demo from web UI |
 | Photon SDK bugs with chat.db | Test early. Fallback: direct SQLite query + `osascript` |
 | MiniMax API downtime | `minimax_client.py` has `_fallback_to_gemini()` wrapper |
 | LangGraph rewrite breaks existing flow | Rewrite incrementally. Graph nodes call existing `execute_task()` internals, don't rewrite worker/browser plumbing |
