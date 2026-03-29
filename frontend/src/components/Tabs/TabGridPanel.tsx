@@ -47,7 +47,7 @@ export function TabGridPanel({ onClose }: TabGridPanelProps) {
   return (
     <div
       className="fixed inset-0 z-40 flex flex-col"
-      style={{ background: 'rgba(6,8,16,0.97)', backdropFilter: 'blur(20px)' }}
+      style={{ background: 'rgba(26,22,8,0.97)', backdropFilter: 'blur(20px)' }}
     >
       {/* Header */}
       <div
@@ -110,7 +110,7 @@ export function TabGridPanel({ onClose }: TabGridPanelProps) {
                   className="cursor-pointer rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
                   style={{
                     border: isActive
-                      ? '1px solid rgba(0,212,255,0.4)'
+                      ? '1px solid rgba(212,146,11,0.4)'
                       : '1px solid rgba(255,255,255,0.06)',
                     background: 'rgba(255,255,255,0.03)',
                   }}
@@ -133,8 +133,8 @@ export function TabGridPanel({ onClose }: TabGridPanelProps) {
                       <div
                         className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded"
                         style={{
-                          background: 'rgba(0,212,255,0.15)',
-                          border: '1px solid rgba(0,212,255,0.3)',
+                          background: 'rgba(212,146,11,0.15)',
+                          border: '1px solid rgba(212,146,11,0.3)',
                         }}
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />

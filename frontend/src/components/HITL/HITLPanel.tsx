@@ -21,7 +21,7 @@ export function HITLPanel() {
       <div
         className="rounded-2xl overflow-hidden"
         style={{
-          background: 'rgba(10,13,22,0.97)',
+          background: 'rgba(40,34,16,0.97)',
           backdropFilter: 'blur(24px)',
           border: '1px solid rgba(245,185,66,0.25)',
           boxShadow: '0 0 40px rgba(245,185,66,0.1), 0 20px 40px rgba(0,0,0,0.4)',
@@ -104,9 +104,9 @@ export function HITLPanel() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 mb-3 transition-colors"
-                            style={{ color: 'rgba(0,212,255,0.6)', fontSize: '10px' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#00d4ff')}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(0,212,255,0.6)')}
+                            style={{ color: 'rgba(212,146,11,0.6)', fontSize: '10px' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = '#D4920B')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(212,146,11,0.6)')}
                           >
                             <ExternalLink className="w-3 h-3" />
                             <span className="terminal-text truncate max-w-[280px]">{req.url}</span>
@@ -123,7 +123,7 @@ export function HITLPanel() {
                               className="w-full h-16 px-3 py-2 rounded-lg terminal-text text-xs resize-none focus:outline-none"
                               style={{
                                 background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(0,212,255,0.2)',
+                                border: '1px solid rgba(212,146,11,0.2)',
                                 color: 'white',
                               }}
                             />
@@ -131,7 +131,7 @@ export function HITLPanel() {
                               <button
                                 onClick={() => { edit(req.hitlId, editValue); setEditingId(null); setEditValue('') }}
                                 className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
-                                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#8b5cf6' }}
+                                style={{ background: 'rgba(200,168,78,0.15)', border: '1px solid rgba(200,168,78,0.3)', color: '#C8A84E' }}
                               >
                                 Submit Edit
                               </button>
@@ -152,9 +152,9 @@ export function HITLPanel() {
                               onClick={() => approve(req.hitlId)}
                               className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all"
                               style={{
-                                background: 'rgba(16,217,160,0.1)',
-                                border: '1px solid rgba(16,217,160,0.25)',
-                                color: '#10d9a0',
+                                background: 'rgba(76,175,80,0.1)',
+                                border: '1px solid rgba(76,175,80,0.25)',
+                                color: '#4CAF50',
                               }}
                             >
                               <Check className="w-3.5 h-3.5" />

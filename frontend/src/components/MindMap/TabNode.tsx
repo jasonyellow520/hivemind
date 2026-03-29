@@ -32,7 +32,7 @@ function AgentLogLines({ agentId }: { agentId: string }) {
   const lastLogs = agent.logs.slice(-3)
   return (
     <div style={{ padding: '6px 10px', flex: 1, overflow: 'hidden' }}>
-      <div style={{ fontSize: 9, color: 'rgba(0,212,255,0.7)', fontFamily: 'monospace', marginBottom: 4 }}>
+      <div style={{ fontSize: 9, color: 'rgba(212,146,11,0.7)', fontFamily: 'monospace', marginBottom: 4 }}>
         {agent.status.toUpperCase()} · step {agent.stepsCompleted}
       </div>
       {lastLogs.map((log, i) => (
@@ -104,10 +104,10 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
   }
 
   const glowFilter = isSelected
-    ? 'drop-shadow(0 0 3px rgba(139,92,246,0.9)) drop-shadow(0 0 18px rgba(139,92,246,0.4))'
+    ? 'drop-shadow(0 0 3px rgba(200,168,78,0.9)) drop-shadow(0 0 18px rgba(200,168,78,0.4))'
     : hasAgent
-      ? 'drop-shadow(0 0 2px rgba(0,212,255,0.6)) drop-shadow(0 0 10px rgba(0,212,255,0.2))'
-      : 'drop-shadow(0 0 1px rgba(0,212,255,0.25)) drop-shadow(0 0 6px rgba(0,212,255,0.06))'
+      ? 'drop-shadow(0 0 2px rgba(212,146,11,0.6)) drop-shadow(0 0 10px rgba(212,146,11,0.2))'
+      : 'drop-shadow(0 0 1px rgba(212,146,11,0.25)) drop-shadow(0 0 6px rgba(212,146,11,0.06))'
 
   // Outer wrapper dims/size
   const outerW = isSelected ? RECT_W : HEX_W
@@ -147,7 +147,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               width: RECT_W,
               height: RECT_H,
               borderRadius: 12,
-              border: '1px solid rgba(139,92,246,0.4)',
+              border: '1px solid rgba(200,168,78,0.4)',
               background: 'rgba(18,8,36,0.98)',
               overflow: 'hidden',
               cursor: 'pointer',
@@ -175,7 +175,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               />
             )}
             {/* Light gradient only at top/bottom for header/footer readability */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,8,16,0.85) 0%, transparent 12%, transparent 88%, rgba(6,8,16,0.85) 100%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(26,22,8,0.85) 0%, transparent 12%, transparent 88%, rgba(26,22,8,0.85) 100%)', pointerEvents: 'none' }} />
 
             {/* Header strip */}
             <div style={{
@@ -184,14 +184,14 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '8px 12px',
-              borderBottom: '1px solid rgba(139,92,246,0.15)',
-              background: 'rgba(6,8,16,0.6)',
+              borderBottom: '1px solid rgba(200,168,78,0.15)',
+              background: 'rgba(26,22,8,0.6)',
             }}>
-              <span style={{ fontSize: 10, color: 'rgba(139,92,246,0.9)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
+              <span style={{ fontSize: 10, color: 'rgba(200,168,78,0.9)', fontFamily: 'monospace', letterSpacing: '0.04em' }}>
                 ⬡ {domain}
               </span>
               {hasAgent && (
-                <span style={{ fontSize: 8, color: 'rgba(0,212,255,0.7)', fontFamily: 'monospace', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: 8, color: 'rgba(212,146,11,0.7)', fontFamily: 'monospace', letterSpacing: '0.06em' }}>
                   AGENT ACTIVE
                 </span>
               )}
@@ -217,13 +217,13 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '6px 12px',
-              borderTop: '1px solid rgba(139,92,246,0.1)',
-              background: 'rgba(6,8,16,0.6)',
+              borderTop: '1px solid rgba(200,168,78,0.1)',
+              background: 'rgba(26,22,8,0.6)',
             }}>
               <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                 {(data.title || domain).slice(0, 28)}
               </span>
-              <span style={{ fontSize: 7, color: 'rgba(139,92,246,0.4)', fontFamily: 'monospace', marginLeft: 8, whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 7, color: 'rgba(200,168,78,0.4)', fontFamily: 'monospace', marginLeft: 8, whiteSpace: 'nowrap' }}>
                 dbl-click →
               </span>
             </div>
@@ -240,11 +240,11 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
                   onClick={handleSaveMemory}
                   title="Save page to Queen memory"
                   style={{
-                    background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)',
+                    background: 'rgba(200,168,78,0.2)', border: '1px solid rgba(200,168,78,0.35)',
                     borderRadius: 6, padding: '3px 5px', cursor: 'pointer', display: 'flex', alignItems: 'center',
                   }}
                 >
-                  <BookMarked style={{ width: 11, height: 11, color: 'rgba(139,92,246,0.9)' }} />
+                  <BookMarked style={{ width: 11, height: 11, color: 'rgba(200,168,78,0.9)' }} />
                 </button>
                 <button
                   onClick={handleClose}
@@ -270,16 +270,16 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               left: 0,
               width: RECT_W,
               background: 'rgba(10,6,24,0.97)',
-              border: '1px solid rgba(139,92,246,0.25)',
+              border: '1px solid rgba(200,168,78,0.25)',
               borderRadius: 12,
               padding: '8px 10px',
-              boxShadow: '0 0 20px rgba(139,92,246,0.12)',
+              boxShadow: '0 0 20px rgba(200,168,78,0.12)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 5 }}>
-              <Zap style={{ width: 9, height: 9, color: 'rgba(0,212,255,0.6)' }} />
-              <span style={{ fontSize: 8, fontFamily: 'monospace', color: 'rgba(0,212,255,0.5)', letterSpacing: '0.06em' }}>
+              <Zap style={{ width: 9, height: 9, color: 'rgba(212,146,11,0.6)' }} />
+              <span style={{ fontSize: 8, fontFamily: 'monospace', color: 'rgba(212,146,11,0.5)', letterSpacing: '0.06em' }}>
                 AGENT TASK
               </span>
             </div>
@@ -296,7 +296,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               style={{
                 width: '100%', boxSizing: 'border-box',
                 background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(139,92,246,0.15)',
+                border: '1px solid rgba(200,168,78,0.15)',
                 borderRadius: 6,
                 color: 'rgba(255,255,255,0.8)',
                 fontSize: 10, fontFamily: 'monospace',
@@ -310,10 +310,10 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
               disabled={!cmd.trim() || sending}
               style={{
                 width: '100%',
-                background: sending ? 'rgba(139,92,246,0.05)' : 'rgba(139,92,246,0.15)',
-                border: '1px solid rgba(139,92,246,0.25)',
+                background: sending ? 'rgba(200,168,78,0.05)' : 'rgba(200,168,78,0.15)',
+                border: '1px solid rgba(200,168,78,0.25)',
                 borderRadius: 6,
-                color: '#8b5cf6',
+                color: '#C8A84E',
                 fontSize: 9, fontFamily: 'monospace', letterSpacing: '0.06em',
                 padding: '4px 0',
                 cursor: cmd.trim() && !sending ? 'pointer' : 'not-allowed',
@@ -338,7 +338,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
             height: HEX_H,
             clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
             overflow: 'hidden',
-            background: 'rgba(10,13,22,0.96)',
+            background: 'rgba(40,34,16,0.96)',
             cursor: 'pointer',
             filter: glowFilter,
           }}
@@ -365,7 +365,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
           {/* Dark gradient overlay */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(6,8,16,0.55) 0%, rgba(6,8,16,0.1) 40%, rgba(6,8,16,0.6) 100%)',
+            background: 'linear-gradient(to bottom, rgba(26,22,8,0.55) 0%, rgba(26,22,8,0.1) 40%, rgba(26,22,8,0.6) 100%)',
             pointerEvents: 'none',
           }} />
 
@@ -379,10 +379,10 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
           }}>
             <span style={{
               fontSize: 9,
-              color: 'rgba(0,212,255,0.85)',
+              color: 'rgba(212,146,11,0.85)',
               fontFamily: 'monospace',
               letterSpacing: '0.04em',
-              textShadow: '0 0 8px rgba(0,212,255,0.4)',
+              textShadow: '0 0 8px rgba(212,146,11,0.4)',
               display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {domain}
@@ -406,7 +406,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
             </span>
             {data.instruction?.trim() && (
               <span style={{
-                fontSize: 7, color: 'rgba(0,212,255,0.5)', fontFamily: 'monospace',
+                fontSize: 7, color: 'rgba(212,146,11,0.5)', fontFamily: 'monospace',
                 display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 marginTop: 2,
               }}>
@@ -422,7 +422,7 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
                 position: 'absolute', top: 16, right: '30%',
                 width: 6, height: 6,
                 borderRadius: '50%',
-                background: '#00d4ff', boxShadow: '0 0 8px rgba(0,212,255,0.9)',
+                background: '#D4920B', boxShadow: '0 0 8px rgba(212,146,11,0.9)',
               }}
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 1, repeat: Infinity }}
@@ -441,11 +441,11 @@ export const TabNode = memo(function TabNode({ data }: { data: TabNodeData }) {
                 onClick={handleSaveMemory}
                 title="Save page to Queen memory"
                 style={{
-                  background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)',
+                  background: 'rgba(200,168,78,0.2)', border: '1px solid rgba(200,168,78,0.35)',
                   borderRadius: 6, padding: '3px 5px', cursor: 'pointer', display: 'flex', alignItems: 'center',
                 }}
               >
-                <BookMarked style={{ width: 11, height: 11, color: 'rgba(139,92,246,0.9)' }} />
+                <BookMarked style={{ width: 11, height: 11, color: 'rgba(200,168,78,0.9)' }} />
               </button>
               <button
                 onClick={handleClose}

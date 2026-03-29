@@ -32,7 +32,7 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
             className="absolute inset-0 rounded-full"
-            style={{ border: '1px solid rgba(0,212,255,0.4)' }}
+            style={{ border: '1px solid rgba(212,146,11,0.4)' }}
           />
         )}
       </AnimatePresence>
@@ -43,7 +43,7 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
         transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
         className="absolute inset-0 rounded-full"
         style={{
-          border: '1px dashed rgba(0,212,255,0.25)',
+          border: '1px dashed rgba(212,146,11,0.25)',
           borderRadius: '50%',
         }}
       />
@@ -55,8 +55,8 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
         className="absolute rounded-full"
         style={{
           inset: '18px',
-          border: '1px solid rgba(139,92,246,0.3)',
-          borderTopColor: 'rgba(139,92,246,0.8)',
+          border: '1px solid rgba(200,168,78,0.3)',
+          borderTopColor: 'rgba(200,168,78,0.8)',
           borderRadius: '50%',
         }}
       />
@@ -65,19 +65,19 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
       <motion.div
         animate={isActive ? {
           boxShadow: [
-            '0 0 30px rgba(0,212,255,0.2), 0 0 0 0 rgba(0,212,255,0)',
-            '0 0 50px rgba(0,212,255,0.4), 0 0 80px rgba(0,212,255,0.1)',
-            '0 0 30px rgba(0,212,255,0.2), 0 0 0 0 rgba(0,212,255,0)',
+            '0 0 30px rgba(212,146,11,0.2), 0 0 0 0 rgba(212,146,11,0)',
+            '0 0 50px rgba(212,146,11,0.4), 0 0 80px rgba(212,146,11,0.1)',
+            '0 0 30px rgba(212,146,11,0.2), 0 0 0 0 rgba(212,146,11,0)',
           ]
         } : isDone ? {
-          boxShadow: '0 0 30px rgba(16,217,160,0.3)'
+          boxShadow: '0 0 30px rgba(76,175,80,0.3)'
         } : {}}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         className="absolute rounded-full flex flex-col items-center justify-center"
         style={{
           inset: '28px',
-          background: 'linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(10,13,22,0.98) 40%, rgba(139,92,246,0.06) 100%)',
-          border: `1.5px solid ${isDone ? 'rgba(16,217,160,0.4)' : 'rgba(0,212,255,0.35)'}`,
+          background: 'linear-gradient(135deg, rgba(212,146,11,0.08) 0%, rgba(40,34,16,0.98) 40%, rgba(200,168,78,0.06) 100%)',
+          border: `1.5px solid ${isDone ? 'rgba(76,175,80,0.4)' : 'rgba(212,146,11,0.35)'}`,
           borderRadius: '50%',
         }}
       >
@@ -91,25 +91,25 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
             className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{
               background: isDone
-                ? 'linear-gradient(135deg, rgba(16,217,160,0.2), rgba(10,13,22,0.9))'
-                : 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(139,92,246,0.15))',
+                ? 'linear-gradient(135deg, rgba(76,175,80,0.2), rgba(40,34,16,0.9))'
+                : 'linear-gradient(135deg, rgba(212,146,11,0.15), rgba(200,168,78,0.15))',
             }}
           >
             {isActive ? (
               <Activity
                 className="w-5 h-5 animate-pulse"
-                style={{ color: '#00d4ff' }}
+                style={{ color: '#D4920B' }}
               />
             ) : isDone ? (
-              <Brain className="w-5 h-5" style={{ color: '#10d9a0' }} />
+              <Brain className="w-5 h-5" style={{ color: '#4CAF50' }} />
             ) : (
-              <Brain className="w-5 h-5" style={{ color: 'rgba(0,212,255,0.7)' }} />
+              <Brain className="w-5 h-5" style={{ color: 'rgba(212,146,11,0.7)' }} />
             )}
           </div>
 
           <span
             className="text-[9px] font-bold tracking-[0.2em] uppercase terminal-text"
-            style={{ color: isDone ? '#10d9a0' : '#00d4ff' }}
+            style={{ color: isDone ? '#4CAF50' : '#D4920B' }}
           >
             {isDone ? 'DONE' : 'MIND'}
           </span>
@@ -126,14 +126,14 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
                   animate={{ scaleY: [0.4, 1, 0.4] }}
                   transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                   className="w-0.5 rounded-full"
-                  style={{ height: '8px', background: '#00d4ff' }}
+                  style={{ height: '8px', background: '#D4920B' }}
                 />
               ))}
             </motion.div>
           )}
 
           {data.subtaskCount > 0 && !isActive && (
-            <span className="text-[9px] terminal-text" style={{ color: 'rgba(0,212,255,0.5)' }}>
+            <span className="text-[9px] terminal-text" style={{ color: 'rgba(212,146,11,0.5)' }}>
               {data.subtaskCount} agents
             </span>
           )}
@@ -160,8 +160,8 @@ export const QueenNode = memo(({ data }: { data: QueenNodeData }) => {
               top: '50%',
               left: '-3px',
               transform: 'translateY(-50%)',
-              background: i === 0 ? '#00d4ff' : i === 1 ? '#8b5cf6' : '#10d9a0',
-              boxShadow: `0 0 6px ${i === 0 ? '#00d4ff' : i === 1 ? '#8b5cf6' : '#10d9a0'}`,
+              background: i === 0 ? '#D4920B' : i === 1 ? '#C8A84E' : '#4CAF50',
+              boxShadow: `0 0 6px ${i === 0 ? '#D4920B' : i === 1 ? '#C8A84E' : '#4CAF50'}`,
             }}
           />
         </motion.div>

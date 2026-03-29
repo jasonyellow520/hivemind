@@ -6,9 +6,9 @@ import { useMindStore } from '../../store/useMindStore'
 const STATUS_DOT: Record<string, string> = {
   idle: '#4b5563',
   planning: '#3b82f6',
-  running: '#00d4ff',
+  running: '#D4920B',
   waiting_hitl: '#f5b942',
-  completed: '#10d9a0',
+  completed: '#4CAF50',
   error: '#f43f5e',
 }
 
@@ -56,19 +56,19 @@ export function AgentLogPanel({ onClose }: AgentLogPanelProps) {
       transition={{ type: 'spring', stiffness: 280, damping: 28 }}
       className="absolute right-0 top-0 bottom-0 w-80 flex flex-col"
       style={{
-        background: 'rgba(10,13,22,0.97)',
+        background: 'rgba(40,34,16,0.97)',
         backdropFilter: 'blur(24px)',
-        borderLeft: '1px solid rgba(139,92,246,0.1)',
+        borderLeft: '1px solid rgba(200,168,78,0.1)',
         zIndex: 40,
       }}
     >
       {/* Header */}
       <div
         className="shrink-0 px-4 py-3 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(139,92,246,0.08)' }}
+        style={{ borderBottom: '1px solid rgba(200,168,78,0.08)' }}
       >
         <div className="flex items-center gap-2">
-          <Terminal className="w-4 h-4" style={{ color: '#8b5cf6' }} />
+          <Terminal className="w-4 h-4" style={{ color: '#C8A84E' }} />
           <span className="text-xs font-semibold text-white">Neural Feed</span>
         </div>
         <div className="flex items-center gap-2">
@@ -81,9 +81,9 @@ export function AgentLogPanel({ onClose }: AgentLogPanelProps) {
                   title={`Agent ${a.subtaskIndex + 1}: ${a.taskDescription}`}
                   className="w-6 h-6 rounded-md flex items-center justify-center terminal-text text-[10px] font-bold transition-all"
                   style={{
-                    background: selectedAgentId === a.agentId ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${selectedAgentId === a.agentId ? 'rgba(139,92,246,0.4)' : 'rgba(255,255,255,0.06)'}`,
-                    color: selectedAgentId === a.agentId ? '#8b5cf6' : 'rgba(255,255,255,0.3)',
+                    background: selectedAgentId === a.agentId ? 'rgba(200,168,78,0.2)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${selectedAgentId === a.agentId ? 'rgba(200,168,78,0.4)' : 'rgba(255,255,255,0.06)'}`,
+                    color: selectedAgentId === a.agentId ? '#C8A84E' : 'rgba(255,255,255,0.3)',
                     borderBottom: `2px solid ${STATUS_DOT[a.status]}`,
                   }}
                 >
@@ -147,7 +147,7 @@ export function AgentLogPanel({ onClose }: AgentLogPanelProps) {
                 >
                   <span
                     className="terminal-text text-[9px] shrink-0 mt-0.5 w-5 text-right"
-                    style={{ color: 'rgba(139,92,246,0.4)' }}
+                    style={{ color: 'rgba(200,168,78,0.4)' }}
                   >
                     {i + 1}
                   </span>
@@ -158,8 +158,8 @@ export function AgentLogPanel({ onClose }: AgentLogPanelProps) {
                     </p>
                     {log.url && (
                       <div className="flex items-center gap-1 mt-0.5">
-                        <Globe className="w-2.5 h-2.5 shrink-0" style={{ color: 'rgba(0,212,255,0.3)' }} />
-                        <span className="terminal-text text-[9px] truncate" style={{ color: 'rgba(0,212,255,0.35)' }}>
+                        <Globe className="w-2.5 h-2.5 shrink-0" style={{ color: 'rgba(212,146,11,0.3)' }} />
+                        <span className="terminal-text text-[9px] truncate" style={{ color: 'rgba(212,146,11,0.35)' }}>
                           {log.url}
                         </span>
                       </div>
@@ -175,7 +175,7 @@ export function AgentLogPanel({ onClose }: AgentLogPanelProps) {
                   animate={{ opacity: [0.3, 0.6, 0.3] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                   className="terminal-text text-[11px]"
-                  style={{ color: 'rgba(0,212,255,0.4)' }}
+                  style={{ color: 'rgba(212,146,11,0.4)' }}
                 >
                   Waiting for neural activity...
                 </motion.div>
@@ -189,13 +189,13 @@ export function AgentLogPanel({ onClose }: AgentLogPanelProps) {
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-3 p-3 rounded-xl"
                 style={{
-                  background: 'rgba(16,217,160,0.05)',
-                  border: '1px solid rgba(16,217,160,0.15)',
+                  background: 'rgba(76,175,80,0.05)',
+                  border: '1px solid rgba(76,175,80,0.15)',
                 }}
               >
                 <div className="flex items-center gap-1.5 mb-2">
-                  <CheckCircle className="w-3 h-3" style={{ color: '#10d9a0' }} />
-                  <span className="terminal-text text-[10px] font-medium" style={{ color: '#10d9a0' }}>Result</span>
+                  <CheckCircle className="w-3 h-3" style={{ color: '#4CAF50' }} />
+                  <span className="terminal-text text-[10px] font-medium" style={{ color: '#4CAF50' }}>Result</span>
                 </div>
                 <p className="terminal-text text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
                   {agent.result.slice(0, 200)}{agent.result.length > 200 ? '...' : ''}

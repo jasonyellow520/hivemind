@@ -9,8 +9,8 @@ export const ClusterLabelNode = memo(function ClusterLabelNode({
     <div
       style={{
         padding: '3px 10px',
-        background: 'rgba(6,8,16,0.7)',
-        border: '1px solid rgba(0,212,255,0.1)',
+        background: 'rgba(26,22,8,0.7)',
+        border: '1px solid rgba(212,146,11,0.1)',
         borderRadius: 20,
         backdropFilter: 'blur(8px)',
         pointerEvents: 'none',
@@ -20,7 +20,7 @@ export const ClusterLabelNode = memo(function ClusterLabelNode({
       <span
         style={{
           fontSize: 8,
-          color: 'rgba(0,212,255,0.5)',
+          color: 'rgba(212,146,11,0.5)',
           fontFamily: 'monospace',
           letterSpacing: '0.1em',
         }}

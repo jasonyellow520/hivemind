@@ -6,11 +6,11 @@
 
 @layer base {
   :root {
-    --cyan: #00d4ff;
-    --purple: #8b5cf6;
-    --green: #10d9a0;
+    --cyan: #D4920B;
+    --purple: #C8A84E;
+    --green: #4CAF50;
     --amber: #f5b942;
-    --red: #f43f5e;
+    --red: #E85D24;
   }
 
   * {
@@ -31,46 +31,46 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 212, 255, 0.2);
+    background: rgba(212, 146, 11, 0.2);
     border-radius: 2px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 212, 255, 0.4);
+    background: rgba(212, 146, 11, 0.4);
   }
 }
 
 @layer utilities {
   /* Glassmorphism panels */
   .glass {
-    background: rgba(10, 13, 22, 0.85);
+    background: rgba(40, 34, 16, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(26, 35, 64, 0.8);
+    border: 1px solid rgba(64, 54, 26, 0.8);
   }
 
   .glass-cyan {
-    background: rgba(0, 212, 255, 0.04);
+    background: rgba(212, 146, 11, 0.04);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 212, 255, 0.12);
+    border: 1px solid rgba(212, 146, 11, 0.12);
   }
 
   .glass-purple {
-    background: rgba(139, 92, 246, 0.05);
+    background: rgba(200, 168, 78, 0.05);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(200, 168, 78, 0.15);
   }
 
   /* Glow effects */
   .glow-cyan {
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
+    box-shadow: 0 0 20px rgba(212, 146, 11, 0.15), 0 0 60px rgba(212, 146, 11, 0.05);
   }
 
   .glow-cyan-strong {
-    box-shadow: 0 0 30px rgba(0, 212, 255, 0.3), 0 0 80px rgba(0, 212, 255, 0.1);
+    box-shadow: 0 0 30px rgba(212, 146, 11, 0.3), 0 0 80px rgba(212, 146, 11, 0.1);
   }
 
   .glow-purple {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 60px rgba(139, 92, 246, 0.05);
+    box-shadow: 0 0 20px rgba(200, 168, 78, 0.15), 0 0 60px rgba(200, 168, 78, 0.05);
   }
 
   .glow-amber {
@@ -78,52 +78,51 @@
   }
 
   .glow-green {
-    box-shadow: 0 0 20px rgba(16, 217, 160, 0.2), 0 0 60px rgba(16, 217, 160, 0.06);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.2), 0 0 60px rgba(76, 175, 80, 0.06);
   }
 
   /* Text gradients */
   .text-gradient-cyan {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #00d4ff, #8b5cf6);
+    background-image: linear-gradient(135deg, #D4920B, #C8A84E);
   }
 
   .text-gradient-mind {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 50%, #00d4ff 100%);
+    background-image: linear-gradient(135deg, #D4920B 0%, #C8A84E 50%, #D4920B 100%);
     background-size: 200% auto;
     animation: textShimmer 3s linear infinite;
   }
 
   /* Borders */
   .border-cyan {
-    border-color: rgba(0, 212, 255, 0.3);
+    border-color: rgba(212, 146, 11, 0.3);
   }
   .border-purple {
-    border-color: rgba(139, 92, 246, 0.3);
+    border-color: rgba(200, 168, 78, 0.3);
   }
 
   /* Neural grid background */
   .neural-bg {
-    background-color: #060810;
+    background-color: transparent;
     background-image:
-      radial-gradient(circle at 25% 25%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 1.5px 1.5px, rgba(26, 35, 64, 0.6) 1px, transparent 0);
-    background-size: 100% 100%, 100% 100%, 32px 32px;
+      radial-gradient(circle at 25% 25%, rgba(212, 146, 11, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(200, 168, 78, 0.03) 0%, transparent 50%);
+    background-size: 100% 100%, 100% 100%;
   }
 
   /* Status ring */
   .ring-running {
-    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.5), 0 0 12px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 0 2px rgba(212, 146, 11, 0.5), 0 0 12px rgba(212, 146, 11, 0.3);
   }
   .ring-hitl {
     box-shadow: 0 0 0 2px rgba(245, 185, 66, 0.5), 0 0 12px rgba(245, 185, 66, 0.3);
   }
   .ring-complete {
-    box-shadow: 0 0 0 2px rgba(16, 217, 160, 0.5), 0 0 12px rgba(16, 217, 160, 0.3);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5), 0 0 12px rgba(76, 175, 80, 0.3);
   }
   .ring-error {
-    box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.5), 0 0 12px rgba(244, 63, 94, 0.3);
+    box-shadow: 0 0 0 2px rgba(232, 93, 36, 0.5), 0 0 12px rgba(232, 93, 36, 0.3);
   }
 
   /* Terminal */
@@ -134,13 +133,13 @@
   /* Cyber button */
   .btn-cyber {
     @apply relative overflow-hidden transition-all duration-200;
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(0, 212, 255, 0.2);
+    background: linear-gradient(135deg, rgba(212, 146, 11, 0.1), rgba(200, 168, 78, 0.1));
+    border: 1px solid rgba(212, 146, 11, 0.2);
   }
   .btn-cyber:hover {
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
-    border-color: rgba(0, 212, 255, 0.4);
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);
+    background: linear-gradient(135deg, rgba(212, 146, 11, 0.15), rgba(200, 168, 78, 0.15));
+    border-color: rgba(212, 146, 11, 0.4);
+    box-shadow: 0 0 15px rgba(212, 146, 11, 0.1);
   }
 
   /* Pill status */
@@ -151,12 +150,12 @@
 
 /* ReactFlow overrides */
 .react-flow__background {
-  background-color: #060810 !important;
+  background-color: #1A1608 !important;
 }
 
 .react-flow__edge-path {
   stroke-width: 2 !important;
-  filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.4));
+  filter: drop-shadow(0 0 4px rgba(212, 146, 11, 0.4));
 }
 
 .react-flow__edge.animated .react-flow__edge-path {
@@ -169,17 +168,17 @@
 }
 
 .react-flow__controls {
-  background: rgba(10, 13, 22, 0.9) !important;
-  border: 1px solid rgba(0, 212, 255, 0.12) !important;
+  background: rgba(40, 34, 16, 0.9) !important;
+  border: 1px solid rgba(212, 146, 11, 0.12) !important;
   border-radius: 8px !important;
-  box-shadow: 0 0 15px rgba(0, 212, 255, 0.05) !important;
+  box-shadow: 0 0 15px rgba(212, 146, 11, 0.05) !important;
 }
 
 .react-flow__controls-button {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(0, 212, 255, 0.08) !important;
-  color: rgba(0, 212, 255, 0.5) !important;
+  border-bottom: 1px solid rgba(212, 146, 11, 0.08) !important;
+  color: rgba(212, 146, 11, 0.5) !important;
   transition: all 0.15s !important;
 }
 
@@ -188,13 +187,13 @@
 }
 
 .react-flow__controls-button:hover {
-  background: rgba(0, 212, 255, 0.08) !important;
-  color: #00d4ff !important;
+  background: rgba(212, 146, 11, 0.08) !important;
+  color: #D4920B !important;
 }
 
 .react-flow__minimap {
-  background: rgba(10, 13, 22, 0.9) !important;
-  border: 1px solid rgba(0, 212, 255, 0.12) !important;
+  background: rgba(40, 34, 16, 0.9) !important;
+  border: 1px solid rgba(212, 146, 11, 0.12) !important;
   border-radius: 8px !important;
 }
 
@@ -226,6 +225,29 @@
 
 /* Custom selection */
 ::selection {
-  background: rgba(0, 212, 255, 0.25);
+  background: rgba(212, 146, 11, 0.25);
   color: white;
+}
+
+/* Honey theme overrides */
+.honey-bg {
+  background: #1A1608;
+}
+
+.honey-card {
+  background: rgba(40,34,16,0.8);
+  border: 1px solid rgba(212,146,11,0.2);
+  border-radius: 12px;
+}
+
+.honey-text-primary {
+  color: #F5E8C8;
+}
+
+.honey-text-muted {
+  color: #8B7A4A;
+}
+
+.honey-accent {
+  color: #D4920B;
 }

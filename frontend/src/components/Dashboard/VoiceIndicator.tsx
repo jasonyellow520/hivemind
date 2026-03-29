@@ -10,9 +10,9 @@ const LIVE_STATE_LABEL: Record<string, string> = {
 }
 
 const LIVE_STATE_COLOR: Record<string, string> = {
-  listening: '#00d4ff',
+  listening: '#D4920B',
   processing: '#f5b942',
-  speaking: '#8b5cf6',
+  speaking: '#C8A84E',
   idle: 'rgba(255,255,255,0.4)',
 }
 
@@ -37,13 +37,13 @@ export function VoiceIndicator() {
           className="fixed top-14 left-1/2 z-50 flex items-center gap-2.5 px-4 py-2 rounded-full"
           style={{
             transform: 'translateX(-50%)',
-            background: 'rgba(10,13,22,0.95)',
-            border: '1px solid rgba(0,212,255,0.2)',
-            boxShadow: '0 0 20px rgba(0,212,255,0.15)',
+            background: 'rgba(40,34,16,0.95)',
+            border: '1px solid rgba(212,146,11,0.2)',
+            boxShadow: '0 0 20px rgba(212,146,11,0.15)',
             backdropFilter: 'blur(20px)',
           }}
         >
-          <Volume2 className="w-3.5 h-3.5 animate-pulse" style={{ color: '#00d4ff' }} />
+          <Volume2 className="w-3.5 h-3.5 animate-pulse" style={{ color: '#D4920B' }} />
           <div className="flex items-center gap-0.5 h-4">
             {[1, 0.5, 0.8, 0.4, 1, 0.6, 0.9, 0.3, 0.7, 1].map((h, i) => (
               <motion.div
@@ -51,12 +51,12 @@ export function VoiceIndicator() {
                 animate={{ scaleY: [h * 0.4, h, h * 0.5, h * 0.8, h * 0.3] }}
                 transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.06, ease: 'easeInOut' }}
                 className="w-0.5 rounded-full"
-                style={{ height: '14px', transformOrigin: 'center', background: '#00d4ff' }}
+                style={{ height: '14px', transformOrigin: 'center', background: '#D4920B' }}
               />
             ))}
           </div>
           {voiceText && (
-            <span className="terminal-text text-[10px] max-w-[200px] truncate" style={{ color: 'rgba(0,212,255,0.8)' }}>
+            <span className="terminal-text text-[10px] max-w-[200px] truncate" style={{ color: 'rgba(212,146,11,0.8)' }}>
               {voiceText}
             </span>
           )}
@@ -72,7 +72,7 @@ export function VoiceIndicator() {
           className="fixed top-14 left-1/2 z-50 flex items-center gap-2.5 px-4 py-2 rounded-full"
           style={{
             transform: 'translateX(-50%)',
-            background: 'rgba(10,13,22,0.95)',
+            background: 'rgba(40,34,16,0.95)',
             border: `1px solid ${LIVE_STATE_COLOR[liveVoiceState]}40`,
             boxShadow: `0 0 20px ${LIVE_STATE_COLOR[liveVoiceState]}20`,
             backdropFilter: 'blur(20px)',

@@ -726,7 +726,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
   }
 
   const modeLabel = selectedTab ? `→ ${domain(selectedTab.url)}` : 'MIND'
-  const modeColor = '#00d4ff'
+  const modeColor = '#D4920B'
 
   return (
     <div className="relative">
@@ -740,15 +740,15 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             className="absolute bottom-full left-0 right-0 mb-0 z-45 flex flex-col"
             style={{
               height: 230,
-              background: 'rgba(6,8,16,0.97)',
-              borderTop: '1px solid rgba(139,92,246,0.16)',
+              background: 'rgba(26,22,8,0.97)',
+              borderTop: '1px solid rgba(200,168,78,0.16)',
               backdropFilter: 'blur(20px)',
             }}
           >
             <div className="flex items-center justify-between px-4 py-1.5 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-2">
-                <Radio className="w-3.5 h-3.5" style={{ color: '#8b5cf6' }} />
-                <span className="terminal-text text-[10px]" style={{ color: 'rgba(139,92,246,0.8)' }}>
+                <Radio className="w-3.5 h-3.5" style={{ color: '#C8A84E' }} />
+                <span className="terminal-text text-[10px]" style={{ color: 'rgba(200,168,78,0.8)' }}>
                   LIVE VOICE {liveVoiceState !== 'idle' ? `· ${liveVoiceState.toUpperCase()}` : ''}
                 </span>
               </div>
@@ -763,9 +763,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                     className="max-w-[85%] rounded-xl px-3 py-2"
                     style={{
                       background: msg.role === 'user'
-                        ? 'rgba(139,92,246,0.14)'
-                        : 'rgba(0,212,255,0.06)',
-                      border: `1px solid ${msg.role === 'user' ? 'rgba(139,92,246,0.25)' : 'rgba(0,212,255,0.1)'}`,
+                        ? 'rgba(200,168,78,0.14)'
+                        : 'rgba(212,146,11,0.06)',
+                      border: `1px solid ${msg.role === 'user' ? 'rgba(200,168,78,0.25)' : 'rgba(212,146,11,0.1)'}`,
                     }}
                   >
                     <p
@@ -796,8 +796,8 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             className="absolute bottom-full left-0 right-0 mb-0 z-40 flex flex-col"
             style={{
               height: chatHeight,
-              background: 'rgba(6,8,16,0.97)',
-              borderTop: '1px solid rgba(0,212,255,0.1)',
+              background: 'rgba(26,22,8,0.97)',
+              borderTop: '1px solid rgba(212,146,11,0.1)',
               backdropFilter: 'blur(20px)',
             }}
           >
@@ -810,8 +810,8 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             </div>
             <div className="flex items-center justify-between px-4 py-1.5 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-3.5 h-3.5" style={{ color: '#00d4ff' }} />
-                <span className="terminal-text text-[10px]" style={{ color: 'rgba(0,212,255,0.6)' }}>CHAT</span>
+                <MessageSquare className="w-3.5 h-3.5" style={{ color: '#D4920B' }} />
+                <span className="terminal-text text-[10px]" style={{ color: 'rgba(212,146,11,0.6)' }}>CHAT</span>
               </div>
               <button onClick={() => setChatOpen(false)} title="Close chat">
                 <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.3)' }} />
@@ -824,9 +824,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                     className="max-w-[85%] rounded-xl px-3 py-2"
                     style={{
                       background: msg.role === 'user'
-                        ? 'rgba(139,92,246,0.12)'
-                        : 'rgba(0,212,255,0.06)',
-                      border: `1px solid ${msg.role === 'user' ? 'rgba(139,92,246,0.2)' : 'rgba(0,212,255,0.1)'}`,
+                        ? 'rgba(200,168,78,0.12)'
+                        : 'rgba(212,146,11,0.06)',
+                      border: `1px solid ${msg.role === 'user' ? 'rgba(200,168,78,0.2)' : 'rgba(212,146,11,0.1)'}`,
                     }}
                   >
                     <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{
@@ -844,9 +844,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                     animate={{ opacity: [0.4, 1, 0.4] }}
                     transition={{ duration: 1, repeat: Infinity }}
                     className="px-3 py-2 rounded-xl"
-                    style={{ background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.1)' }}
+                    style={{ background: 'rgba(212,146,11,0.06)', border: '1px solid rgba(212,146,11,0.1)' }}
                   >
-                    <span className="terminal-text text-[10px]" style={{ color: '#00d4ff' }}>thinking...</span>
+                    <span className="terminal-text text-[10px]" style={{ color: '#D4920B' }}>thinking...</span>
                   </motion.div>
                 </div>
               )}
@@ -866,15 +866,15 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             className="absolute bottom-full left-0 right-0 mb-0 z-50 overflow-hidden"
             style={{
               maxHeight: 300,
-              background: 'rgba(6,8,16,0.97)',
-              borderTop: '1px solid rgba(0,212,255,0.1)',
+              background: 'rgba(26,22,8,0.97)',
+              borderTop: '1px solid rgba(212,146,11,0.1)',
               backdropFilter: 'blur(20px)',
             }}
           >
             <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5" style={{ color: '#00d4ff' }} />
-                <span className="terminal-text text-[10px]" style={{ color: 'rgba(0,212,255,0.6)' }}>MEMORY</span>
+                <Clock className="w-3.5 h-3.5" style={{ color: '#D4920B' }} />
+                <span className="terminal-text text-[10px]" style={{ color: 'rgba(212,146,11,0.6)' }}>MEMORY</span>
               </div>
               <button onClick={() => setShowHistory(false)} title="Close">
                 <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.3)' }} />
@@ -887,7 +887,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                     animate={{ opacity: [0.4, 1, 0.4] }}
                     transition={{ duration: 1, repeat: Infinity }}
                     className="terminal-text text-[10px]"
-                    style={{ color: '#00d4ff' }}
+                    style={{ color: '#D4920B' }}
                   >
                     searching memories...
                   </motion.span>
@@ -917,7 +917,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                       {firstLine.slice(0, 100)}
                     </p>
                     {item.title && (
-                      <p className="terminal-text text-[9px] mt-0.5 truncate" style={{ color: 'rgba(0,212,255,0.4)' }}>
+                      <p className="terminal-text text-[9px] mt-0.5 truncate" style={{ color: 'rgba(212,146,11,0.4)' }}>
                         {item.title}
                       </p>
                     )}
@@ -937,7 +937,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             className="absolute bottom-full left-0 right-0 mb-1 glass rounded-xl overflow-hidden z-50"
-            style={{ border: '1px solid rgba(0,212,255,0.15)' }}
+            style={{ border: '1px solid rgba(212,146,11,0.15)' }}
           >
             {slashMatches.map((c) => (
               <button
@@ -945,8 +945,8 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                 onMouseDown={(e) => { e.preventDefault(); setInput(c.cmd + ' '); inputRef.current?.focus() }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left"
               >
-                <Hash className="w-3 h-3 shrink-0" style={{ color: '#00d4ff' }} />
-                <span className="terminal-text text-xs font-medium" style={{ color: '#00d4ff' }}>{c.cmd}</span>
+                <Hash className="w-3 h-3 shrink-0" style={{ color: '#D4920B' }} />
+                <span className="terminal-text text-xs font-medium" style={{ color: '#D4920B' }}>{c.cmd}</span>
                 <span className="text-xs text-zinc-500">{c.desc}</span>
               </button>
             ))}
@@ -969,19 +969,19 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
                 onMouseDown={(e) => { e.preventDefault(); setInput(t) }}
                 className="px-2.5 py-1 rounded-lg text-[10px] terminal-text transition-all"
                 style={{
-                  background: 'rgba(0,212,255,0.04)',
-                  border: '1px solid rgba(0,212,255,0.1)',
-                  color: 'rgba(0,212,255,0.6)',
+                  background: 'rgba(212,146,11,0.04)',
+                  border: '1px solid rgba(212,146,11,0.1)',
+                  color: 'rgba(212,146,11,0.6)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,212,255,0.08)'
-                  e.currentTarget.style.borderColor = 'rgba(0,212,255,0.25)'
-                  e.currentTarget.style.color = '#00d4ff'
+                  e.currentTarget.style.background = 'rgba(212,146,11,0.08)'
+                  e.currentTarget.style.borderColor = 'rgba(212,146,11,0.25)'
+                  e.currentTarget.style.color = '#D4920B'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,212,255,0.04)'
-                  e.currentTarget.style.borderColor = 'rgba(0,212,255,0.1)'
-                  e.currentTarget.style.color = 'rgba(0,212,255,0.6)'
+                  e.currentTarget.style.background = 'rgba(212,146,11,0.04)'
+                  e.currentTarget.style.borderColor = 'rgba(212,146,11,0.1)'
+                  e.currentTarget.style.color = 'rgba(212,146,11,0.6)'
                 }}
               >
                 {t.length > 42 ? t.slice(0, 42) + '...' : t}
@@ -995,8 +995,8 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
       <div
         className="flex items-center gap-3 px-4 py-3"
         style={{
-          background: 'rgba(10,13,22,0.95)',
-          borderTop: '1px solid rgba(0,212,255,0.1)',
+          background: 'rgba(40,34,16,0.95)',
+          borderTop: '1px solid rgba(212,146,11,0.1)',
         }}
       >
         {/* Mode toggle */}
@@ -1004,10 +1004,10 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
           {selectedTab ? (
             <div
               className="flex items-center gap-1.5 shrink-0 px-2 py-1 rounded-lg"
-              style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)' }}
+              style={{ background: 'rgba(212,146,11,0.08)', border: '1px solid rgba(212,146,11,0.2)' }}
             >
-              <Globe className="w-3 h-3" style={{ color: '#00d4ff' }} />
-              <span className="terminal-text text-[10px] max-w-[100px] truncate" style={{ color: '#00d4ff' }}>
+              <Globe className="w-3 h-3" style={{ color: '#D4920B' }} />
+              <span className="terminal-text text-[10px] max-w-[100px] truncate" style={{ color: '#D4920B' }}>
                 {domain(selectedTab.url)}
               </span>
               <button onClick={() => setSelectedTab(null)} className="ml-0.5" title="Deselect tab">
@@ -1017,10 +1017,10 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
           ) : (
             <div
               className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
-              style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)' }}
+              style={{ background: 'rgba(212,146,11,0.08)', border: '1px solid rgba(212,146,11,0.2)' }}
             >
-              <Terminal className="w-3 h-3" style={{ color: '#00d4ff' }} />
-              <span className="terminal-text text-[10px] font-semibold" style={{ color: '#00d4ff' }}>
+              <Terminal className="w-3 h-3" style={{ color: '#D4920B' }} />
+              <span className="terminal-text text-[10px] font-semibold" style={{ color: '#D4920B' }}>
                 MIND
               </span>
             </div>
@@ -1058,7 +1058,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
           className="flex-1 bg-transparent focus:outline-none terminal-text"
           style={{
             fontSize: '13px',
-            color: isRunning ? 'rgba(0,212,255,0.5)' : 'rgba(255,255,255,0.9)',
+            color: isRunning ? 'rgba(212,146,11,0.5)' : 'rgba(255,255,255,0.9)',
             caretColor: modeColor,
           }}
         />
@@ -1070,7 +1070,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
               animate={{ opacity: [0.4, 0.8, 0.4] }}
               transition={{ duration: 1.2, repeat: Infinity }}
               className="terminal-text text-[10px] px-2 py-0.5 rounded"
-              style={{ background: 'rgba(0,212,255,0.08)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.15)' }}
+              style={{ background: 'rgba(212,146,11,0.08)', color: '#D4920B', border: '1px solid rgba(212,146,11,0.15)' }}
             >
               processing
             </motion.span>
@@ -1080,9 +1080,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
               onClick={toggleHistory}
               className="terminal-text text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-all flex items-center gap-1"
               style={{
-                background: showHistory ? 'rgba(0,212,255,0.1)' : 'rgba(255,255,255,0.05)',
-                color: showHistory ? '#00d4ff' : 'rgba(255,255,255,0.3)',
-                border: showHistory ? '1px solid rgba(0,212,255,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                background: showHistory ? 'rgba(212,146,11,0.1)' : 'rgba(255,255,255,0.05)',
+                color: showHistory ? '#D4920B' : 'rgba(255,255,255,0.3)',
+                border: showHistory ? '1px solid rgba(212,146,11,0.25)' : '1px solid rgba(255,255,255,0.08)',
               }}
             >
               <Clock className="w-2.5 h-2.5" />
@@ -1098,9 +1098,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
             animate={{ opacity: 1 }}
             className="absolute bottom-full left-0 right-0 mb-1 px-4 py-1.5 terminal-text text-[10px] truncate"
             style={{
-              background: 'rgba(6,8,16,0.9)',
-              borderTop: '1px solid rgba(0,212,255,0.12)',
-              color: liveVoiceState === 'speaking' ? '#8b5cf6' : '#00d4ff',
+              background: 'rgba(26,22,8,0.9)',
+              borderTop: '1px solid rgba(212,146,11,0.12)',
+              color: liveVoiceState === 'speaking' ? '#C8A84E' : '#D4920B',
             }}
           >
             {liveVoiceState === 'speaking' ? '◀ ' : '▶ '}{liveTranscript}
@@ -1115,9 +1115,9 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
           disabled={isRecording}
           className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all relative"
           style={{
-            background: isLiveVoice ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.04)',
-            border: `1px solid ${isLiveVoice ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
-            color: isLiveVoice ? '#8b5cf6' : 'rgba(255,255,255,0.3)',
+            background: isLiveVoice ? 'rgba(200,168,78,0.2)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${isLiveVoice ? 'rgba(200,168,78,0.5)' : 'rgba(255,255,255,0.08)'}`,
+            color: isLiveVoice ? '#C8A84E' : 'rgba(255,255,255,0.3)',
           }}
           title={isLiveVoice ? 'Stop live voice' : 'Start live voice session'}
         >
@@ -1125,7 +1125,7 @@ export function CommandBar({ onOpenTabs, onOpenLogs }: CommandBarProps) {
           {isLiveVoice && (
             <motion.div
               className="absolute inset-0 rounded-lg"
-              animate={{ boxShadow: ['0 0 0 0 rgba(139,92,246,0.4)', '0 0 0 5px rgba(139,92,246,0)', '0 0 0 0 rgba(139,92,246,0.4)'] }}
+              animate={{ boxShadow: ['0 0 0 0 rgba(200,168,78,0.4)', '0 0 0 5px rgba(200,168,78,0)', '0 0 0 0 rgba(200,168,78,0.4)'] }}
               transition={{ duration: 1.2, repeat: Infinity }}
             />
           )}

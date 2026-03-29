@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useMindStore } from '../../store/useMindStore'
 
 const TYPE_COLOR: Record<string, string> = {
-  log: 'rgba(0,212,255,0.5)',
+  log: 'rgba(212,146,11,0.5)',
   hitl: '#f5b942',
-  complete: '#10d9a0',
-  spawn: '#8b5cf6',
+  complete: '#4CAF50',
+  spawn: '#C8A84E',
   error: '#f43f5e',
   info: 'rgba(255,255,255,0.35)',
 }
@@ -38,7 +38,7 @@ export function EventFeed() {
       className="flex items-center gap-3 overflow-x-auto px-4 py-1 select-none"
       style={{
         background: 'rgba(0,0,0,0.3)',
-        borderTop: '1px solid rgba(0,212,255,0.06)',
+        borderTop: '1px solid rgba(212,146,11,0.06)',
         scrollbarWidth: 'none',
       }}
     >

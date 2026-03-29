@@ -20,9 +20,9 @@ interface WorkerNodeData {
 const COLOR_MAP: Record<AgentStatus, string> = {
   idle: '#4b5563',
   planning: '#3b82f6',
-  running: '#00d4ff',
+  running: '#D4920B',
   waiting_hitl: '#f5b942',
-  completed: '#10d9a0',
+  completed: '#4CAF50',
   error: '#f43f5e',
 }
 
@@ -101,7 +101,7 @@ export const WorkerNode = memo(({ data }: { data: WorkerNodeData }) => {
           style={{
             width: 100, height: 100,
             top: -5, left: 10,
-            background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(200,168,78,0.2) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -135,7 +135,7 @@ export const WorkerNode = memo(({ data }: { data: WorkerNodeData }) => {
         style={{
           width: 90, height: 90,
           top: 0, left: 15,
-          background: 'linear-gradient(135deg, rgba(10,13,22,0.98), rgba(13,16,32,0.95))',
+          background: 'linear-gradient(135deg, rgba(40,34,16,0.98), rgba(13,16,32,0.95))',
           border: `2px solid ${color}${isSelected ? '80' : '40'}`,
           boxShadow: isSelected ? `0 0 20px ${color}30` : undefined,
         }}
@@ -246,7 +246,7 @@ export const WorkerNode = memo(({ data }: { data: WorkerNodeData }) => {
       {isSelected && (
         <div
           className="absolute -bottom-1 left-1/2 w-4 h-0.5 rounded-full"
-          style={{ transform: 'translateX(-50%)', background: '#8b5cf6' }}
+          style={{ transform: 'translateX(-50%)', background: '#C8A84E' }}
         />
       )}
 

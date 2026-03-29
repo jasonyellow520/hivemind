@@ -69,9 +69,9 @@ export function TabChips({ onOpenPanel }: TabChipsProps) {
         onClick={scanAndUpdate}
         className="flex items-center gap-1 px-2 py-1 rounded-md transition-all terminal-text text-[10px]"
         style={{
-          background: 'rgba(0,212,255,0.06)',
-          border: '1px solid rgba(0,212,255,0.15)',
-          color: 'rgba(0,212,255,0.6)',
+          background: 'rgba(212,146,11,0.06)',
+          border: '1px solid rgba(212,146,11,0.15)',
+          color: 'rgba(212,146,11,0.6)',
         }}
         title="Scan browser tabs"
       >
@@ -90,9 +90,9 @@ export function TabChips({ onOpenPanel }: TabChipsProps) {
             onClick={onOpenPanel}
             className="flex items-center gap-1 px-2 py-1 rounded-md transition-all terminal-text text-[10px] max-w-[100px]"
             style={{
-              background: tab.instruction ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.04)',
-              border: tab.instruction ? '1px solid rgba(0,212,255,0.2)' : '1px solid rgba(255,255,255,0.08)',
-              color: tab.instruction ? '#00d4ff' : 'rgba(255,255,255,0.4)',
+              background: tab.instruction ? 'rgba(212,146,11,0.08)' : 'rgba(255,255,255,0.04)',
+              border: tab.instruction ? '1px solid rgba(212,146,11,0.2)' : '1px solid rgba(255,255,255,0.08)',
+              color: tab.instruction ? '#D4920B' : 'rgba(255,255,255,0.4)',
             }}
             title={tab.title || tab.url}
           >
@@ -128,9 +128,9 @@ export function TabChips({ onOpenPanel }: TabChipsProps) {
           onClick={() => setShowUrlInput((p) => !p)}
           className="w-6 h-6 rounded-md flex items-center justify-center transition-all"
           style={{
-            background: showUrlInput ? 'rgba(0,212,255,0.12)' : 'rgba(255,255,255,0.04)',
-            border: showUrlInput ? '1px solid rgba(0,212,255,0.3)' : '1px solid rgba(255,255,255,0.08)',
-            color: showUrlInput ? '#00d4ff' : 'rgba(255,255,255,0.3)',
+            background: showUrlInput ? 'rgba(212,146,11,0.12)' : 'rgba(255,255,255,0.04)',
+            border: showUrlInput ? '1px solid rgba(212,146,11,0.3)' : '1px solid rgba(255,255,255,0.08)',
+            color: showUrlInput ? '#D4920B' : 'rgba(255,255,255,0.3)',
           }}
           title="Open new tab"
         >
@@ -144,8 +144,8 @@ export function TabChips({ onOpenPanel }: TabChipsProps) {
               exit={{ opacity: 0, y: -4, scale: 0.95 }}
               className="absolute right-0 top-full mt-1 z-50 flex items-center gap-1 p-1.5 rounded-lg"
               style={{
-                background: 'rgba(10,13,22,0.97)',
-                border: '1px solid rgba(0,212,255,0.2)',
+                background: 'rgba(40,34,16,0.97)',
+                border: '1px solid rgba(212,146,11,0.2)',
                 backdropFilter: 'blur(20px)',
                 minWidth: 280,
               }}
@@ -169,7 +169,7 @@ export function TabChips({ onOpenPanel }: TabChipsProps) {
                 className="flex-1 px-2.5 py-1.5 rounded-md terminal-text text-[11px] focus:outline-none"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(0,212,255,0.15)',
+                  border: '1px solid rgba(212,146,11,0.15)',
                   color: 'white',
                 }}
               />
@@ -181,9 +181,9 @@ export function TabChips({ onOpenPanel }: TabChipsProps) {
                 }}
                 className="px-2.5 py-1.5 rounded-md terminal-text text-[10px] shrink-0"
                 style={{
-                  background: 'rgba(0,212,255,0.12)',
-                  border: '1px solid rgba(0,212,255,0.25)',
-                  color: '#00d4ff',
+                  background: 'rgba(212,146,11,0.12)',
+                  border: '1px solid rgba(212,146,11,0.25)',
+                  color: '#D4920B',
                 }}
               >
                 Open

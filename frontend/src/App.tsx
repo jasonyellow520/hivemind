@@ -6,12 +6,12 @@ import { HITLPanel } from './components/HITL/HITLPanel'
 import { AgentLogPanel } from './components/Dashboard/AgentLogPanel'
 import { VoiceIndicator } from './components/Dashboard/VoiceIndicator'
 import { CommandBar } from './components/Dashboard/CommandBar'
-import { EventFeed } from './components/Dashboard/EventFeed'
+import { Sidebar } from './components/Dashboard/Sidebar'
 import { TabChips } from './components/Tabs/TabChips'
 import { TabPanel } from './components/Tabs/TabPanel'
 import { TabGridPanel } from './components/Tabs/TabGridPanel'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Brain, Activity, Layers, Terminal, Sparkles, X, GripHorizontal, ChevronRight, History } from 'lucide-react'
+import { Activity, Terminal, Layers, Sparkles, X, GripHorizontal, ChevronRight, History, MessageSquare } from 'lucide-react'
 
 function App() {
   useWebSocket()
@@ -20,7 +20,6 @@ function App() {
   const hitlQueue = useMindStore((s) => s.hitlQueue)
   const selectedAgentId = useMindStore((s) => s.selectedAgentId)
   const selectAgent = useMindStore((s) => s.selectAgent)
-
   const completedTasks = useMindStore((s) => s.completedTasks)
 
   const [showTabPanel, setShowTabPanel] = useState(false)
@@ -86,13 +85,10 @@ function App() {
       if (e.key === 't' || e.key === 'T') { setShowTabPanel((p) => !p); setShowLogPanel(false) }
       if (e.key === 'g' || e.key === 'G') { setShowGrid((p) => !p) }
       if (e.key === 'v' || e.key === 'V') {
-        // Toggle live voice via store — CommandBar will detect the change
         const store = useMindStore.getState()
         if (store.isLiveVoice) {
           store.setLiveVoice(false, 'idle', '')
         }
-        // If not active, we can't start it here (needs MediaRecorder setup in CommandBar)
-        // So we just signal the toggle via a custom event that CommandBar listens to
         window.dispatchEvent(new CustomEvent('mindd:toggle-live-voice'))
       }
       if (e.key === 'Escape') {
@@ -106,79 +102,115 @@ function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selectAgent])
 
+  const [simSending, setSimSending] = useState(false)
+
+  const simulateIMessage = async () => {
+    if (simSending) return
+    setSimSending(true)
+    try {
+      const res = await fetch('/api/v1/imessage/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Launch 5 agents to find the latest breaking news: 1) AI and machine learning breakthroughs, 2) global conflicts and war updates, 3) tech industry news and launches, 4) science and space discoveries, 5) financial markets and crypto',
+          from_phone: '+15551234567',
+          to_phone: '+15559876543',
+          message_id: `sim-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+        }),
+      })
+      if (res.ok) {
+        useMindStore.getState().pushFeed({
+          type: 'info',
+          text: 'Simulated iMessage received — Dispatcher processing...',
+          timestamp: new Date().toISOString(),
+        })
+      }
+    } catch (e) {
+      console.error('Simulate failed:', e)
+    } finally {
+      setSimSending(false)
+    }
+  }
+
   const isActive = task.status === 'running' || task.status === 'decomposing'
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden" style={{ background: '#060810' }}>
-      {/* ─── Top Header Bar ──────────────────────────────────── */}
-      <header
-        className="shrink-0 flex items-center gap-3 px-4 h-11"
-        style={{ borderBottom: '1px solid rgba(0,212,255,0.07)', background: 'rgba(6,8,16,0.95)' }}
+    <div className="h-screen w-screen flex flex-col overflow-hidden" style={{ background: '#1A1608' }}>
+      {/* ─── Top Nav Bar (gold theme) ──────────────────────── */}
+      <nav
+        className="shrink-0 flex items-center justify-between px-5 h-12"
+        style={{
+          borderBottom: '1px solid rgba(212,146,11,0.2)',
+          background: 'rgba(26,22,8,0.95)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 10,
+        }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Left: Logo + branding */}
+        <div className="flex items-center gap-3">
           <motion.div
             animate={isActive ? {
               boxShadow: [
-                '0 0 8px rgba(0,212,255,0.3)',
-                '0 0 20px rgba(0,212,255,0.5)',
-                '0 0 8px rgba(0,212,255,0.3)',
+                '0 0 8px rgba(212,146,11,0.3)',
+                '0 0 20px rgba(212,146,11,0.5)',
+                '0 0 8px rgba(212,146,11,0.3)',
               ]
             } : {}}
             transition={{ duration: 2, repeat: Infinity }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #D4920B, #8B6914)' }}
+          >
+            <svg width="16" height="18" viewBox="0 0 100 115">
+              <path d="M50 2L95 27V77L50 102L5 77V27Z" fill="#1A1608" />
+            </svg>
+          </motion.div>
+          <span style={{ fontWeight: 800, fontSize: 18, color: '#F5E8C8', letterSpacing: 2 }}>
+            Hive
+          </span>
+          <div
             style={{
-              background: 'linear-gradient(135deg, rgba(0,212,255,0.12), rgba(139,92,246,0.12))',
-              border: '1px solid rgba(0,212,255,0.2)',
+              background: 'rgba(212,146,11,0.15)',
+              border: '1px solid rgba(212,146,11,0.3)',
+              borderRadius: 6,
+              padding: '3px 12px',
+              fontSize: 11,
+              color: '#D4920B',
+              fontWeight: 600,
+              letterSpacing: 1,
             }}
           >
-            <Brain className="w-4 h-4" style={{ color: '#00d4ff' }} />
-          </motion.div>
-          <span className="text-sm font-bold terminal-text text-gradient-cyan tracking-wide">
-            MINDD
-          </span>
-          <span
-            className="terminal-text text-[9px] px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(0,212,255,0.06)', color: 'rgba(0,212,255,0.4)', border: '1px solid rgba(0,212,255,0.1)' }}
-          >
-            v1.0
-          </span>
+            swarm intelligence
+          </div>
+
+          {/* Active task indicator */}
+          {task.masterTask && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden md:flex items-center gap-1.5 ml-3 max-w-xs"
+            >
+              {isActive && (
+                <motion.div
+                  animate={{ opacity: [0.4, 1, 0.4] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: '#D4920B' }}
+                />
+              )}
+              <span className="text-[10px] truncate" style={{ color: '#8B7A4A', fontFamily: 'monospace' }}>
+                {task.masterTask}
+              </span>
+            </motion.div>
+          )}
         </div>
 
-        {/* Divider */}
-        <div className="w-px h-4 mx-1" style={{ background: 'rgba(0,212,255,0.1)' }} />
+        {/* Right: Tab chips + action buttons */}
+        <div className="flex items-center gap-3">
+          <TabChips onOpenPanel={() => { setShowTabPanel(true); setShowLogPanel(false) }} />
 
-        {/* Active task name */}
-        {task.masterTask && (
-          <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="hidden md:flex items-center gap-1.5 min-w-0 flex-1 max-w-xs"
-          >
-            {isActive && (
-              <motion.div
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 1, repeat: Infinity }}
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ background: '#00d4ff' }}
-              />
-            )}
-            <span className="terminal-text text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              {task.masterTask}
-            </span>
-          </motion.div>
-        )}
+          <div className="w-px h-4" style={{ background: 'rgba(212,146,11,0.15)' }} />
 
-        <div className="flex-1" />
-
-        {/* Tab chips */}
-        <TabChips onOpenPanel={() => { setShowTabPanel(true); setShowLogPanel(false) }} />
-
-        {/* Divider */}
-        <div className="w-px h-4 mx-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-1.5 shrink-0">
           {/* HITL indicator */}
           <AnimatePresence>
             {hitlCount > 0 && (
@@ -186,11 +218,12 @@ function App() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg terminal-text text-[10px]"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px]"
                 style={{
                   background: 'rgba(245,185,66,0.1)',
                   border: '1px solid rgba(245,185,66,0.25)',
                   color: '#f5b942',
+                  fontFamily: 'monospace',
                 }}
               >
                 <motion.div
@@ -211,11 +244,12 @@ function App() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg terminal-text text-[10px]"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px]"
                 style={{
-                  background: 'rgba(0,212,255,0.06)',
-                  border: '1px solid rgba(0,212,255,0.12)',
-                  color: 'rgba(0,212,255,0.6)',
+                  background: 'rgba(212,146,11,0.08)',
+                  border: '1px solid rgba(212,146,11,0.2)',
+                  color: '#D4920B',
+                  fontFamily: 'monospace',
                 }}
               >
                 <Activity className="w-3 h-3" />
@@ -233,15 +267,35 @@ function App() {
             )}
           </AnimatePresence>
 
+          {/* Simulate iMessage */}
+          <button
+            onClick={simulateIMessage}
+            disabled={simSending}
+            title="Simulate iMessage (5 news agents)"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] transition-all"
+            style={{
+              background: simSending ? 'rgba(76,175,80,0.15)' : 'rgba(76,175,80,0.08)',
+              border: '1px solid rgba(76,175,80,0.25)',
+              color: '#4CAF50',
+              opacity: simSending ? 0.6 : 1,
+              fontFamily: 'monospace',
+            }}
+          >
+            <MessageSquare className="w-3 h-3" />
+            {simSending ? 'Sending...' : 'iMessage'}
+          </button>
+
+          <div className="w-px h-4" style={{ background: 'rgba(212,146,11,0.15)' }} />
+
           {/* Panel toggles */}
           <button
             onClick={() => { setShowLogPanel((p) => !p); setShowTabPanel(false) }}
             title="Toggle Logs (L)"
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
             style={{
-              background: showLogPanel ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)',
-              border: showLogPanel ? '1px solid rgba(139,92,246,0.3)' : '1px solid rgba(255,255,255,0.06)',
-              color: showLogPanel ? '#8b5cf6' : 'rgba(255,255,255,0.3)',
+              background: showLogPanel ? 'rgba(212,146,11,0.15)' : 'rgba(255,255,255,0.04)',
+              border: showLogPanel ? '1px solid rgba(212,146,11,0.3)' : '1px solid rgba(255,255,255,0.06)',
+              color: showLogPanel ? '#D4920B' : '#8B7A4A',
             }}
           >
             <Terminal className="w-3.5 h-3.5" />
@@ -251,190 +305,242 @@ function App() {
             title="Toggle Tabs (T)"
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
             style={{
-              background: showTabPanel ? 'rgba(0,212,255,0.1)' : 'rgba(255,255,255,0.04)',
-              border: showTabPanel ? '1px solid rgba(0,212,255,0.25)' : '1px solid rgba(255,255,255,0.06)',
-              color: showTabPanel ? '#00d4ff' : 'rgba(255,255,255,0.3)',
+              background: showTabPanel ? 'rgba(212,146,11,0.1)' : 'rgba(255,255,255,0.04)',
+              border: showTabPanel ? '1px solid rgba(212,146,11,0.25)' : '1px solid rgba(255,255,255,0.06)',
+              color: showTabPanel ? '#D4920B' : '#8B7A4A',
             }}
           >
             <Layers className="w-3.5 h-3.5" />
           </button>
+
+          {/* Notification bell */}
+          <div style={{ position: 'relative', cursor: 'pointer' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B7A4A" strokeWidth="1.5">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 01-3.46 0" />
+            </svg>
+            {hitlCount > 0 && (
+              <div style={{ position: 'absolute', top: -2, right: -2, width: 6, height: 6, borderRadius: '50%', background: '#E85D24' }} />
+            )}
+          </div>
         </div>
-      </header>
+      </nav>
 
       {/* ─── Tab Grid Overlay ────────────────────────────────── */}
       {showGrid && <TabGridPanel onClose={() => setShowGrid(false)} />}
 
-      {/* ─── Main Canvas Area ─────────────────────────────────── */}
-      <div className="flex-1 relative min-h-0">
-        <MindGraph />
+      {/* ─── Main Content: Sidebar + Honeycomb ──────────────── */}
+      <div className="flex-1 flex min-h-0">
+        {/* Left Sidebar */}
+        <Sidebar />
 
-        {/* HITL panel (top-right overlay) */}
-        <AnimatePresence>
-          {hitlCount > 0 && <HITLPanel />}
-        </AnimatePresence>
+        {/* Center — Honeycomb Canvas */}
+        <div className="flex-1 relative min-h-0" style={{ overflow: 'hidden' }}>
+          {/* Background hex grid — large decorative honeycomb */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="100%" height="100%" viewBox="0 0 800 700" preserveAspectRatio="xMidYMid slice" style={{ opacity: 0.06 }}>
+              {/* Row 0 */}
+              <polygon points="200,0 280,46 280,138 200,184 120,138 120,46" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="360,0 440,46 440,138 360,184 280,138 280,46" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="520,0 600,46 600,138 520,184 440,138 440,46" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="680,0 760,46 760,138 680,184 600,138 600,46" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              {/* Row 1 (offset) */}
+              <polygon points="120,138 200,184 200,276 120,322 40,276 40,184" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="280,138 360,184 360,276 280,322 200,276 200,184" fill="#D4920B" fillOpacity="0.03" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="440,138 520,184 520,276 440,322 360,276 360,184" fill="#D4920B" fillOpacity="0.03" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="600,138 680,184 680,276 600,322 520,276 520,184" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              {/* Row 2 */}
+              <polygon points="200,276 280,322 280,414 200,460 120,414 120,322" fill="#D4920B" fillOpacity="0.04" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="360,276 440,322 440,414 360,460 280,414 280,322" fill="#D4920B" fillOpacity="0.05" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="520,276 600,322 600,414 520,460 440,414 440,322" fill="#D4920B" fillOpacity="0.04" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="680,276 760,322 760,414 680,460 600,414 600,322" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              {/* Row 3 (offset) */}
+              <polygon points="120,414 200,460 200,552 120,598 40,552 40,460" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="280,414 360,460 360,552 280,598 200,552 200,460" fill="#D4920B" fillOpacity="0.03" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="440,414 520,460 520,552 440,598 360,552 360,460" fill="#D4920B" fillOpacity="0.03" stroke="#D4920B" strokeWidth="1.5"/>
+              <polygon points="600,414 680,460 680,552 600,598 520,552 520,460" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              {/* Row 4 */}
+              <polygon points="200,552 280,598 280,690 200,736 120,690 120,598" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="360,552 440,598 440,690 360,736 280,690 280,598" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="520,552 600,598 600,690 520,736 440,690 440,598" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              <polygon points="680,552 760,598 760,690 680,736 600,690 600,598" fill="none" stroke="#D4920B" strokeWidth="2"/>
+              {/* Diagonal accent lines */}
+              <line x1="0" y1="0" x2="800" y2="700" stroke="#D4920B" strokeWidth="0.5" opacity="0.5"/>
+              <line x1="800" y1="0" x2="0" y2="700" stroke="#D4920B" strokeWidth="0.5" opacity="0.5"/>
+            </svg>
+          </div>
 
-        {/* Log panel (right side drawer) */}
-        <AnimatePresence>
-          {showLogPanel && agentList.length > 0 && (
-            <AgentLogPanel onClose={() => { setShowLogPanel(false); selectAgent(null) }} />
-          )}
-        </AnimatePresence>
+          <MindGraph />
 
-        {/* Tab panel (right side drawer) */}
-        <AnimatePresence>
-          {showTabPanel && (
-            <TabPanel onClose={() => setShowTabPanel(false)} />
-          )}
-        </AnimatePresence>
+          {/* HITL panel (top-right overlay) */}
+          <AnimatePresence>
+            {hitlCount > 0 && <HITLPanel />}
+          </AnimatePresence>
 
-        {/* Results panel (resizable, per-agent output) */}
-        <AnimatePresence>
-          {showResults && task.finalResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-4 left-4 right-4 z-30 flex flex-col"
-              style={{ height: resultsHeight }}
-            >
-              <div
-                className="rounded-2xl overflow-hidden flex flex-col h-full"
-                style={{
-                  background: 'rgba(10,13,22,0.97)',
-                  border: '1px solid rgba(16,217,160,0.2)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 0 30px rgba(16,217,160,0.08)',
-                }}
+          {/* Log panel (right side drawer) */}
+          <AnimatePresence>
+            {showLogPanel && agentList.length > 0 && (
+              <AgentLogPanel onClose={() => { setShowLogPanel(false); selectAgent(null) }} />
+            )}
+          </AnimatePresence>
+
+          {/* Tab panel (right side drawer) */}
+          <AnimatePresence>
+            {showTabPanel && (
+              <TabPanel onClose={() => setShowTabPanel(false)} />
+            )}
+          </AnimatePresence>
+
+          {/* Results panel (resizable, per-agent output) */}
+          <AnimatePresence>
+            {showResults && task.finalResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-4 left-4 right-4 z-30 flex flex-col"
+                style={{ height: resultsHeight }}
               >
-                {/* Drag handle */}
                 <div
-                  className="h-3 cursor-row-resize flex items-center justify-center shrink-0 hover:bg-white/5 transition-colors rounded-t-2xl"
-                  onMouseDown={onResultsDragStart}
+                  className="rounded-2xl overflow-hidden flex flex-col h-full"
+                  style={{
+                    background: 'rgba(40,34,16,0.97)',
+                    border: '1px solid rgba(76,175,80,0.2)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 0 30px rgba(76,175,80,0.08)',
+                  }}
                 >
-                  <GripHorizontal className="w-4 h-2.5" style={{ color: 'rgba(255,255,255,0.15)' }} />
-                </div>
-
-                {/* Header with tab switcher */}
-                <div
-                  className="px-4 py-2 flex items-center justify-between shrink-0"
-                  style={{ borderBottom: '1px solid rgba(16,217,160,0.1)' }}
-                >
-                  <div className="flex items-center gap-2 overflow-x-auto min-w-0">
-                    <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#10d9a0' }} />
-                    <span className="text-xs font-semibold text-white shrink-0">Task Complete</span>
-
-                    {/* Tab buttons */}
-                    <div className="flex items-center gap-1 ml-2">
-                      <button
-                        onClick={() => setResultTab('summary')}
-                        className="px-2 py-0.5 rounded text-[10px] terminal-text transition-all"
-                        style={{
-                          background: resultTab === 'summary' ? 'rgba(16,217,160,0.15)' : 'rgba(255,255,255,0.04)',
-                          border: `1px solid ${resultTab === 'summary' ? 'rgba(16,217,160,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                          color: resultTab === 'summary' ? '#10d9a0' : 'rgba(255,255,255,0.4)',
-                        }}
-                      >
-                        Summary
-                      </button>
-                      {task.agentResults.map((r, i) => (
-                        <button
-                          key={r.agentId}
-                          onClick={() => setResultTab(r.agentId)}
-                          className="px-2 py-0.5 rounded text-[10px] terminal-text transition-all"
-                          style={{
-                            background: resultTab === r.agentId ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)',
-                            border: `1px solid ${resultTab === r.agentId ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                            color: resultTab === r.agentId ? '#8b5cf6' : 'rgba(255,255,255,0.4)',
-                          }}
-                        >
-                          Agent {i + 1}
-                          <span className="ml-1 opacity-50">({r.stepsTaken}s)</span>
-                        </button>
-                      ))}
-
-                      {/* History toggle */}
-                      {completedTasks.length > 1 && (
-                        <button
-                          onClick={() => setShowHistory((p) => !p)}
-                          className="px-2 py-0.5 rounded text-[10px] terminal-text transition-all ml-1"
-                          style={{
-                            background: showHistory ? 'rgba(0,212,255,0.1)' : 'rgba(255,255,255,0.04)',
-                            border: `1px solid ${showHistory ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                            color: showHistory ? '#00d4ff' : 'rgba(255,255,255,0.3)',
-                          }}
-                        >
-                          <History className="w-2.5 h-2.5 inline mr-0.5" />
-                          {completedTasks.length}
-                        </button>
-                      )}
-                    </div>
+                  {/* Drag handle */}
+                  <div
+                    className="h-3 cursor-row-resize flex items-center justify-center shrink-0 hover:bg-white/5 transition-colors rounded-t-2xl"
+                    onMouseDown={onResultsDragStart}
+                  >
+                    <GripHorizontal className="w-4 h-2.5" style={{ color: 'rgba(255,255,255,0.15)' }} />
                   </div>
-                  <button onClick={() => setShowResults(false)} className="shrink-0 ml-2" title="Close results">
-                    <X className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.3)' }} />
-                  </button>
-                </div>
 
-                {/* Content area */}
-                <div className="flex-1 overflow-y-auto p-4 min-h-0">
-                  {showHistory ? (
-                    <div className="space-y-3">
-                      {[...completedTasks].reverse().map((ct, i) => (
-                        <div key={ct.taskId + i} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <ChevronRight className="w-3 h-3" style={{ color: '#10d9a0' }} />
-                            <span className="terminal-text text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                              {ct.masterTask.length > 80 ? ct.masterTask.slice(0, 80) + '...' : ct.masterTask}
-                            </span>
-                            <span className="terminal-text text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                              {ct.agentResults.length} agent{ct.agentResults.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          <p className="terminal-text text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                            {ct.finalResult.length > 300 ? ct.finalResult.slice(0, 300) + '...' : ct.finalResult}
-                          </p>
-                        </div>
-                      ))}
+                  {/* Header with tab switcher */}
+                  <div
+                    className="px-4 py-2 flex items-center justify-between shrink-0"
+                    style={{ borderBottom: '1px solid rgba(76,175,80,0.1)' }}
+                  >
+                    <div className="flex items-center gap-2 overflow-x-auto min-w-0">
+                      <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#4CAF50' }} />
+                      <span className="text-xs font-semibold" style={{ color: '#F5E8C8' }}>Task Complete</span>
+
+                      <div className="flex items-center gap-1 ml-2">
+                        <button
+                          onClick={() => setResultTab('summary')}
+                          className="px-2 py-0.5 rounded text-[10px] transition-all"
+                          style={{
+                            background: resultTab === 'summary' ? 'rgba(76,175,80,0.15)' : 'rgba(255,255,255,0.04)',
+                            border: `1px solid ${resultTab === 'summary' ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                            color: resultTab === 'summary' ? '#4CAF50' : 'rgba(255,255,255,0.4)',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          Summary
+                        </button>
+                        {task.agentResults.map((r, i) => (
+                          <button
+                            key={r.agentId}
+                            onClick={() => setResultTab(r.agentId)}
+                            className="px-2 py-0.5 rounded text-[10px] transition-all"
+                            style={{
+                              background: resultTab === r.agentId ? 'rgba(212,146,11,0.15)' : 'rgba(255,255,255,0.04)',
+                              border: `1px solid ${resultTab === r.agentId ? 'rgba(212,146,11,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                              color: resultTab === r.agentId ? '#D4920B' : 'rgba(255,255,255,0.4)',
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            Agent {i + 1}
+                            <span className="ml-1 opacity-50">({r.stepsTaken}s)</span>
+                          </button>
+                        ))}
+
+                        {completedTasks.length > 1 && (
+                          <button
+                            onClick={() => setShowHistory((p) => !p)}
+                            className="px-2 py-0.5 rounded text-[10px] transition-all ml-1"
+                            style={{
+                              background: showHistory ? 'rgba(212,146,11,0.1)' : 'rgba(255,255,255,0.04)',
+                              border: `1px solid ${showHistory ? 'rgba(212,146,11,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                              color: showHistory ? '#D4920B' : 'rgba(255,255,255,0.3)',
+                              fontFamily: 'monospace',
+                            }}
+                          >
+                            <History className="w-2.5 h-2.5 inline mr-0.5" />
+                            {completedTasks.length}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  ) : resultTab === 'summary' ? (
-                    <p className="terminal-text text-xs leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                      {task.finalResult}
-                    </p>
-                  ) : (
-                    (() => {
-                      const agentResult = task.agentResults.find((r) => r.agentId === resultTab)
-                      if (!agentResult) return null
-                      const agentState = agents[resultTab]
-                      return (
-                        <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="terminal-text text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>
-                              {agentResult.stepsTaken} steps
-                            </span>
-                            {agentState?.taskDescription && (
-                              <span className="terminal-text text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                                {agentState.taskDescription.slice(0, 100)}
+                    <button onClick={() => setShowResults(false)} className="shrink-0 ml-2" title="Close results">
+                      <X className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                    </button>
+                  </div>
+
+                  {/* Content area */}
+                  <div className="flex-1 overflow-y-auto p-4 min-h-0">
+                    {showHistory ? (
+                      <div className="space-y-3">
+                        {[...completedTasks].reverse().map((ct, i) => (
+                          <div key={ct.taskId + i} className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <ChevronRight className="w-3 h-3" style={{ color: '#4CAF50' }} />
+                              <span className="text-[11px] font-medium" style={{ color: '#F5E8C8', fontFamily: 'monospace' }}>
+                                {ct.masterTask.length > 80 ? ct.masterTask.slice(0, 80) + '...' : ct.masterTask}
                               </span>
-                            )}
+                              <span className="text-[9px]" style={{ color: '#8B7A4A', fontFamily: 'monospace' }}>
+                                {ct.agentResults.length} agent{ct.agentResults.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace' }}>
+                              {ct.finalResult.length > 300 ? ct.finalResult.slice(0, 300) + '...' : ct.finalResult}
+                            </p>
                           </div>
-                          <p className="terminal-text text-xs leading-relaxed whitespace-pre-wrap" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                            {agentResult.result}
-                          </p>
-                        </div>
-                      )
-                    })()
-                  )}
+                        ))}
+                      </div>
+                    ) : resultTab === 'summary' ? (
+                      <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: '#E8D8B0', fontFamily: 'monospace' }}>
+                        {task.finalResult}
+                      </p>
+                    ) : (
+                      (() => {
+                        const agentResult = task.agentResults.find((r) => r.agentId === resultTab)
+                        if (!agentResult) return null
+                        const agentState = agents[resultTab]
+                        return (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(212,146,11,0.1)', color: '#D4920B', border: '1px solid rgba(212,146,11,0.2)', fontFamily: 'monospace' }}>
+                                {agentResult.stepsTaken} steps
+                              </span>
+                              {agentState?.taskDescription && (
+                                <span className="text-[10px] truncate" style={{ color: '#8B7A4A', fontFamily: 'monospace' }}>
+                                  {agentState.taskDescription.slice(0, 100)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: '#E8D8B0', fontFamily: 'monospace' }}>
+                              {agentResult.result}
+                            </p>
+                          </div>
+                        )
+                      })()
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Voice indicator */}
-        <VoiceIndicator />
+          {/* Voice indicator */}
+          <VoiceIndicator />
+        </div>
       </div>
-
-      {/* ─── Event Feed ──────────────────────────────────────── */}
-      <EventFeed />
 
       {/* ─── Command Bar ─────────────────────────────────────── */}
       <CommandBar

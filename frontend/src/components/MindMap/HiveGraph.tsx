@@ -120,7 +120,7 @@ function MindGraphInner() {
   const defaultEdgeOptions = {
     type: 'smoothstep',
     animated: false,
-    style: { stroke: 'rgba(0,212,255,0.2)', strokeWidth: 1.5 },
+    style: { stroke: 'rgba(212,146,11,0.2)', strokeWidth: 1.5 },
   }
 
   return (
@@ -131,7 +131,7 @@ function MindGraphInner() {
           top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
           width: '60%', height: '60%',
-          background: 'radial-gradient(ellipse at center, rgba(0,212,255,0.04) 0%, rgba(139,92,246,0.03) 40%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(212,146,11,0.04) 0%, rgba(200,168,78,0.03) 40%, transparent 70%)',
         }}
       />
 
@@ -150,12 +150,7 @@ function MindGraphInner() {
         style={{ background: 'transparent' }}
         onPaneClick={() => { if (selectedTabId) setSelectedTab(null) }}
       >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={28}
-          size={1}
-          color="rgba(26,35,64,0.8)"
-        />
+        {/* Background dots removed — honeycomb SVG shows through from App.tsx */}
         <Controls
           showInteractive={false}
           className="!bottom-4 !left-4"
@@ -171,13 +166,13 @@ function MindGraphInner() {
         >
           <motion.div
             animate={isActive ? {
-              boxShadow: ['0 0 0 0 rgba(0,212,255,0.4)', '0 0 0 6px rgba(0,212,255,0)', '0 0 0 0 rgba(0,212,255,0.4)']
+              boxShadow: ['0 0 0 0 rgba(212,146,11,0.4)', '0 0 0 6px rgba(212,146,11,0)', '0 0 0 0 rgba(212,146,11,0.4)']
             } : {}}
             transition={{ duration: 1.5, repeat: Infinity }}
             className="w-2 h-2 rounded-full"
-            style={{ background: isActive ? '#00d4ff' : hitlCount > 0 ? '#f5b942' : tabs.length > 0 ? '#10d9a0' : '#4b5563' }}
+            style={{ background: isActive ? '#D4920B' : hitlCount > 0 ? '#f5b942' : tabs.length > 0 ? '#4CAF50' : '#6B5A2A' }}
           />
-          <span className="terminal-text text-[10px] font-medium" style={{ color: isActive ? '#00d4ff' : tabs.length > 0 ? '#10d9a0' : 'rgba(255,255,255,0.4)' }}>
+          <span className="terminal-text text-[10px] font-medium" style={{ color: isActive ? '#D4920B' : tabs.length > 0 ? '#4CAF50' : 'rgba(255,255,255,0.4)' }}>
             {isActive ? 'NEURAL ACTIVE' : hitlCount > 0 ? 'AWAITING INPUT' : tabs.length > 0 ? `${tabs.length} TABS SYNCED` : 'STANDBY'}
           </span>
         </motion.div>
@@ -192,8 +187,8 @@ function MindGraphInner() {
             >
               {runningCount > 0 && (
                 <div className="glass rounded-md px-2.5 py-1 flex items-center gap-1.5">
-                  <Cpu className="w-3 h-3 animate-pulse" style={{ color: '#00d4ff' }} />
-                  <span className="terminal-text text-[10px]" style={{ color: '#00d4ff' }}>
+                  <Cpu className="w-3 h-3 animate-pulse" style={{ color: '#D4920B' }} />
+                  <span className="terminal-text text-[10px]" style={{ color: '#D4920B' }}>
                     {runningCount} executing
                   </span>
                 </div>
@@ -208,8 +203,8 @@ function MindGraphInner() {
               )}
               {completedCount > 0 && (
                 <div className="glass rounded-md px-2.5 py-1 flex items-center gap-1.5">
-                  <Wifi className="w-3 h-3" style={{ color: '#10d9a0' }} />
-                  <span className="terminal-text text-[10px]" style={{ color: '#10d9a0' }}>
+                  <Wifi className="w-3 h-3" style={{ color: '#4CAF50' }} />
+                  <span className="terminal-text text-[10px]" style={{ color: '#4CAF50' }}>
                     {completedCount} complete
                   </span>
                 </div>
@@ -234,7 +229,7 @@ function MindGraphInner() {
                 transition={{ duration: 3, repeat: Infinity }}
                 className="w-24 h-24 mx-auto rounded-full"
                 style={{
-                  border: '1px dashed rgba(0,212,255,0.2)',
+                  border: '1px dashed rgba(212,146,11,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}
               >
@@ -242,12 +237,12 @@ function MindGraphInner() {
                   animate={{ opacity: [0.2, 0.5, 0.2] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                   className="w-16 h-16 rounded-full"
-                  style={{ border: '1px dashed rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ border: '1px dashed rgba(200,168,78,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <div className="w-2 h-2 rounded-full" style={{ background: 'rgba(0,212,255,0.4)' }} />
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'rgba(212,146,11,0.4)' }} />
                 </motion.div>
               </motion.div>
-              <p className="terminal-text text-[11px]" style={{ color: 'rgba(0,212,255,0.3)' }}>
+              <p className="terminal-text text-[11px]" style={{ color: 'rgba(212,146,11,0.3)' }}>
                 TYPE A COMMAND BELOW TO ACTIVATE THE MIND
               </p>
             </div>

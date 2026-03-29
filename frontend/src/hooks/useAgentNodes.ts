@@ -8,9 +8,9 @@ const QUEEN_ID = 'queen-node'
 const EDGE_COLORS: Record<string, string> = {
   idle: 'rgba(75,85,99,0.3)',
   planning: 'rgba(59,130,246,0.4)',
-  running: 'rgba(0,212,255,0.5)',
+  running: 'rgba(212,146,11,0.5)',
   waiting_hitl: 'rgba(245,185,66,0.5)',
-  completed: 'rgba(16,217,160,0.45)',
+  completed: 'rgba(76,175,80,0.45)',
   error: 'rgba(244,63,94,0.45)',
 }
 
@@ -173,7 +173,7 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
           ? agentList.find((a) => a.agentId === tab.assignedAgentId)
           : null
         const agentStatus = agent?.status || (hasAgent ? 'running' : 'idle')
-        const edgeColor = EDGE_COLORS[agentStatus] || 'rgba(0,212,255,0.4)'
+        const edgeColor = EDGE_COLORS[agentStatus] || 'rgba(212,146,11,0.4)'
         const isAnimated = agentStatus === 'running' || agentStatus === 'planning'
 
         edges.push({
@@ -269,7 +269,7 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
         })
 
         const isAnimated = agent.status === 'running' || agent.status === 'planning'
-        const edgeColor = EDGE_COLORS[agent.status] || 'rgba(0,212,255,0.2)'
+        const edgeColor = EDGE_COLORS[agent.status] || 'rgba(212,146,11,0.2)'
 
         edges.push({
           id: `edge-${QUEEN_ID}-${agent.agentId}`,
@@ -291,7 +291,7 @@ export function useAgentNodes(clusterLabels: Record<string, string> = {}) {
             target: `tab-${agent.tabId}`,
             animated: agent.status === 'running',
             style: {
-              stroke: EDGE_COLORS[agent.status] || 'rgba(0,212,255,0.3)',
+              stroke: EDGE_COLORS[agent.status] || 'rgba(212,146,11,0.3)',
               strokeWidth: 1.5,
               strokeDasharray: '5 3',
             },
