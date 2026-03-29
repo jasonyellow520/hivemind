@@ -85,7 +85,7 @@ class iMessageSender:
         try:
             payload = {
                 "to": to_phone,
-                "text": text,
+                "message": text,
                 "timestamp": datetime.utcnow().isoformat()
             }
             
