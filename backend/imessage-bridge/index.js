@@ -1,5 +1,5 @@
 
-require('dotenv').config({ path: '../../.env' });
+require('dotenv').config({ path: '../.env' });
 const express = require('express');
 const axios = require('axios');
 const { IMessageSDK } = require('@photon-ai/imessage-kit');
@@ -36,6 +36,11 @@ app.post('/send', async (req, res) => {
         console.error('Error sending message:', error);
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// Health check endpoint (used by Python imessage_sender.health_check)
+app.get('/health', (req, res) => {
+    res.json({ healthy: true, status: 'running', uptime: process.uptime() });
 });
 
 // Start watching for new messages and send them to the webhook

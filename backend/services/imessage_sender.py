@@ -93,7 +93,7 @@ class iMessageSender:
                 payload["from"] = from_phone
                 
             if attachments:
-                payload["attachments"] = attachments
+                payload["files"] = attachments
                 
             logger.info(f"Sending iMessage to {to_phone}: {text[:50]}{'...' if len(text) > 50 else ''}")
             

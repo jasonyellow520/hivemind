@@ -184,6 +184,7 @@ async def _delegate_to_queen(text: str) -> str:
         try:
             result = await execute_task(request, task_id=tid)
             active_tasks[tid] = result
+            await _send_task_result_to_imessage(tid, result)
         except Exception as e:
             logger.error("Queen task %s failed: %s", tid, e)
             active_tasks[tid] = TaskResponse(
@@ -196,11 +197,46 @@ async def _delegate_to_queen(text: str) -> str:
             await ws_manager.broadcast(
                 events.task_failed(tid, str(e), master_task=text)
             )
+            await _send_task_result_to_imessage(tid, active_tasks[tid])
         finally:
             _running_tasks.pop(tid, None)
 
     asyncio.create_task(_run())
     return tid
+
+
+async def _send_task_result_to_imessage(task_id: str, result) -> None:
+    """Send completed/failed task result back to iMessage user if the task originated from iMessage."""
+    try:
+        from services import conversation_store, imessage_sender
+
+        phone = await conversation_store.get_phone_number_for_task(task_id)
+        if not phone:
+            return
+
+        final_text = result.final_result or ""
+        if not final_text:
+            return
+
+        status = getattr(result, "status", None)
+        if status and str(status) == "failed":
+            reply = f"Task failed: {final_text}"
+        else:
+            reply = final_text
+
+        await imessage_sender.send_imessage(to_phone=phone, text=reply)
+        logger.info("Task %s result sent to iMessage %s", task_id, phone)
+
+        await conversation_store.add_message(
+            message_id=f"task-result-{task_id}",
+            from_phone="system",
+            to_phone=phone,
+            text=reply,
+            timestamp=__import__("datetime").datetime.utcnow(),
+            direction="outbound",
+        )
+    except Exception as e:
+        logger.error("Failed to send task result to iMessage for task %s: %s", task_id, e)
 
 
 def _clean_think_tags(text: str) -> str:
