@@ -367,12 +367,6 @@ hivemind/
 
 ---
 
-## Built With TRAE AI
-
-This project was rapidly prototyped using [TRAE AI](https://trae.ai) for vibe coding — generating UI components, debugging agent logic, and iterating on the hexagonal dashboard design in real-time during the 24-hour hackathon.
-
----
-
 ## License
 
 MIT
