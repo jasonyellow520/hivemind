@@ -54,6 +54,12 @@ This project was built in 24 hours at the **[Build with TRAE.ai & MiniMax Hackat
 
 <p align="center"><i>Agents deployed in parallel, each controlling a real Chrome tab. The hexagonal hive shows live agent status while the command bar accepts new tasks.</i></p>
 
+<p align="center">
+  <a href="https://youtu.be/eeQFg_CHCm4">
+    <img src="https://img.shields.io/badge/Demo_Video-YouTube-red?style=for-the-badge&logo=youtube" alt="Demo Video"/>
+  </a>
+</p>
+
 ---
 
 ## What is Hivemind?

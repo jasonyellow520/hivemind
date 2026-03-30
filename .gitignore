@@ -35,3 +35,7 @@ Thumbs.db
 .cursor/
 
 minimax_image_test/
+
+# Runtime data
+backend/conversations.json
+*.log
