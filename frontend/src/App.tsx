@@ -166,7 +166,7 @@ function App() {
             </svg>
           </motion.div>
           <span style={{ fontWeight: 800, fontSize: 18, color: '#F5E8C8', letterSpacing: 2 }}>
-            Hive
+            Hivemind
           </span>
           <div
             style={{

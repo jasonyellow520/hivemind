@@ -3,7 +3,13 @@
 </p>
 
 <h1 align="center">Hivemind</h1>
-<h3 align="center">Your AI Browser Swarm. One Command. Infinite Agents.</h3>
+<h3 align="center">Swarm Intelligence for Your Browser</h3>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/hackathon-Build_with_TRAE_x_MiniMax-FF6B35?style=for-the-badge" alt="Hackathon"/>
+  <img src="https://img.shields.io/badge/USC-March_2026-990000?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTEyIDNMNCAyMWgxNkwxMiAzeiIvPjwvc3ZnPg==" alt="USC"/>
+  <img src="https://img.shields.io/badge/24hr-Hackathon_Project-blue?style=for-the-badge" alt="24hr"/>
+</p>
 
 <p align="center">
   Deploy autonomous browser agents from your dashboard, voice, or iMessage. Hivemind classifies your intent, checks memory, and either answers instantly or deploys a coordinated swarm of agents across your real Chrome tabs.
@@ -14,17 +20,39 @@
   <img src="https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=white" alt="React"/>
   <img src="https://img.shields.io/badge/MiniMax-M2.7-FF6B35?style=flat&logoColor=white" alt="MiniMax"/>
   <img src="https://img.shields.io/badge/gemini-3_pro-4285F4?logo=google&logoColor=white" alt="Gemini"/>
+  <img src="https://img.shields.io/badge/TRAE.ai-Vibe_Coding-000000?style=flat&logoColor=white" alt="TRAE"/>
   <img src="https://img.shields.io/badge/iMessage-Photon_Kit-34C759?logo=apple&logoColor=white" alt="iMessage"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
 ---
 
+## Hackathon
+
+This project was built in 24 hours at the **[Build with TRAE.ai & MiniMax Hackathon](https://hackathon-site-henna.vercel.app/)** hosted by BIA@USC on March 27-28, 2026 at the University of Southern California, Los Angeles.
+
+- **Theme:** AI Agents for Productivity & Life Hacks
+- **Tech Partners:** [TRAE AI](https://trae.ai), [MiniMax](https://minimax.io)
+- **Track Partner:** [Photon](https://photon.codes) (iMessage integration bonus track)
+- **Devpost:** [hivemind-swarm-intelligence-for-your-browser](https://devpost.com/software/hivemind-swarm-intelligence-for-your-browser)
+- **Event:** [Luma registration page](https://luma.com/k5dc1l0d)
+
+### Team
+
+| Name | GitHub |
+|------|--------|
+| Felix Zhang | [@SSFelixzyk](https://github.com/SSFelixzyk) |
+| Kevin Doshi | [@Kvndoshi](https://github.com/Kvndoshi) |
+| Shuyi Zhan | |
+| TengFei Huang | [@jasonyellow520](https://github.com/jasonyellow520) |
+
+---
+
 <p align="center">
-  <img src="docs/images/dashboard.png" alt="Hivemind Dashboard — 23 agents swarming across Chrome tabs" width="100%"/>
+  <img src="docs/images/dashboard.png" alt="Hivemind Dashboard — agents swarming across Chrome tabs" width="100%"/>
 </p>
 
-<p align="center"><i>23 agents deployed in parallel, each controlling a real Chrome tab. The hexagonal hive shows live agent status while the command bar accepts new tasks.</i></p>
+<p align="center"><i>Agents deployed in parallel, each controlling a real Chrome tab. The hexagonal hive shows live agent status while the command bar accepts new tasks.</i></p>
 
 ---
 
@@ -95,12 +123,6 @@ Before any sensitive action — sending an email, submitting a form, making a pu
 ### Agent Kill Switch
 Kill any agent instantly from the dashboard. The Trash icon on agent nodes and the log panel gives you full control. Killed agents clean up their browser tabs automatically.
 
-### Protected Dashboard
-Agents are strictly prohibited from navigating to or using the dashboard tab. Even if the only open tab is the dashboard, agents create a new tab instead of hijacking it.
-
-### Streaming Chat with Live Context
-Ask "what's happening?" while agents run and get a streaming response with live agent status injected. The AI knows which agents are running, what step they're on, and what they've found so far. Task results automatically appear in the chat panel when complete.
-
 ### Dual Browser Engine
 - **Playwright** (default on Windows): Accessibility-tree agent via `aria_snapshot()`. Text-only, fast (~1-3s/step), ~4x fewer tokens.
 - **browser-use**: Full vision-based agent with screenshots. Slower (~4-8s/step) but handles complex visual layouts.
@@ -167,7 +189,7 @@ Ask "what's happening?" while agents run and get a streaming response with live 
 ### 1. Clone
 
 ```bash
-git clone https://github.com/Kvndoshi/hivemind.git
+git clone https://github.com/jasonyellow520/hivemind.git
 cd hivemind
 ```
 
@@ -216,7 +238,7 @@ python run.py
 
 This starts both the backend (FastAPI on port 8081) and frontend (Vite on port 5173).
 
-Open **http://localhost:5173** — Mindd is ready.
+Open **http://localhost:5173** — Hivemind is ready.
 
 ---
 
@@ -240,7 +262,7 @@ Click the microphone icon and speak. Transcribed and routed through the orchestr
 
 ### iMessage (macOS)
 
-Text your Mindd from any iPhone. Requires the Photon iMessage Kit bridge running on macOS.
+Text your Hivemind from any iPhone. Requires the Photon iMessage Kit bridge running on macOS.
 
 ### Keyboard Shortcuts
 
@@ -269,6 +291,7 @@ Text your Mindd from any iPhone. Requires the Photon iMessage Kit bridge running
 | **Voice** | ElevenLabs STT + Web Audio |
 | **iMessage** | Photon iMessage Kit (macOS bridge) |
 | **Real-time** | WebSocket events + SSE streaming |
+| **Dev Tools** | TRAE AI (vibe coding / rapid prototyping) |
 
 ---
 
@@ -285,32 +308,6 @@ Text your Mindd from any iPhone. Requires the Photon iMessage Kit bridge running
 | `POST` | `/api/v1/memory/search` | Search memory |
 | `DELETE` | `/api/v1/agents/:id` | Kill a running agent |
 | `WS` | `/ws` | Real-time event stream |
-
----
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key (Queen + Workers) |
-| `MINIMAX_API_KEY` | Yes | MiniMax API key (orchestrator) |
-| `SUPERMEMORY_API_KEY` | No | Supermemory key for persistent RAG memory |
-| `ELEVENLABS_API_KEY` | No | ElevenLabs key for voice features |
-| `BROWSER_ENGINE` | No | `playwright` (default) or `browser-use` |
-| `AGENT_MAX_STEPS` | No | Max steps per agent (default: 30) |
-
----
-
-## How It Works
-
-1. **You type, speak, or text** a message
-2. **MiniMax orchestrator** classifies intent, preloads relevant memories from Supermemory
-3. **Decision** — answer from memory, save a fact, or delegate to Queen
-4. **Queen (Gemini Pro)** decomposes browser tasks into parallel subtasks with tab assignments
-5. **Agents (Gemini Flash)** spawn concurrently, each controlling a real Chrome tab via CDP
-6. **Execution** — agents navigate, click, extract data, with HITL pauses for sensitive actions
-7. **Synthesis** — results aggregated and streamed back to the user
-8. **Memory** — task results and discovered facts saved to Supermemory for future queries
 
 ---
 
@@ -370,17 +367,9 @@ hivemind/
 
 ---
 
-## Cross-Platform
+## Built With TRAE AI
 
-Hivemind runs on both **macOS** and **Windows**:
-
-| Feature | macOS | Windows |
-|---------|-------|---------|
-| Dashboard | Yes | Yes |
-| Browser agents | Yes | Yes |
-| Voice commands | Yes | Yes |
-| iMessage bridge | Yes (Photon Kit) | No (requires macOS) |
-| Default engine | Playwright | Playwright |
+This project was rapidly prototyped using [TRAE AI](https://trae.ai) for vibe coding — generating UI components, debugging agent logic, and iterating on the hexagonal dashboard design in real-time during the 24-hour hackathon.
 
 ---
 
